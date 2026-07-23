@@ -1,12 +1,12 @@
 import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
 import {
-  SECTORS,
+  NETWORKS,
   rowAvailableNow,
   rowEmergency,
   rowTopRated,
   rowFoodTrucks,
-  rowBySector,
+  rowByNetwork,
   spotlight,
 } from "@/lib/data";
 
@@ -35,7 +35,7 @@ function Nav() {
       </div>
       <div className="navlinks">
         <a href="#discover">Discover</a>
-        <a href="#sectors">Sectors</a>
+        <a href="#networks">Networks</a>
         <a href="#food-trucks">Food Trucks</a>
         <a href="#automations">HLP Automations</a>
       </div>
@@ -64,7 +64,7 @@ function Row({
         <h2>
           <span>{icon}</span> {title}
         </h2>
-        <a className="see" href="#sectors">
+        <a className="see" href="#networks">
           See all ›
         </a>
       </div>
@@ -126,19 +126,19 @@ export default function Home() {
       <Row title="Top Rated Near You" icon="⭐" items={rowTopRated()} />
       <Row title="Food Trucks Live Today" icon="🌮" items={rowFoodTrucks()} />
       <div id="food-trucks" />
-      <Row title="Home Services in 37604" icon="🏠" items={rowBySector("home")} />
+      <Row title="Home Services in 37604" icon="🏠" items={rowByNetwork("home")} />
 
-      {/* Browse every sector */}
-      <section className="section" id="sectors">
-        <h2>Browse every sector</h2>
+      {/* Browse every Network */}
+      <section className="section" id="networks">
+        <h2>Browse every Network</h2>
         <p className="sub">Max 3 pros per service, per neighborhood. Curated, never crowded.</p>
         <div className="sectorgrid">
-          {SECTORS.map((s) => (
-            <div key={s.id} className="sector" style={{ background: s.hue }}>
+          {NETWORKS.map((s) => (
+            <Link key={s.id} href={`/network/${s.slug}`} className="sector" style={{ background: s.hue }}>
               <span style={{ fontSize: 22 }}>{s.icon}</span>
               {s.name}
               <small>{s.count} services</small>
-            </div>
+            </Link>
           ))}
         </div>
       </section>
@@ -197,7 +197,7 @@ export default function Home() {
         <div className="col">
           <h4>Neighbors</h4>
           <a href="#discover">Discover local pros</a>
-          <a href="#sectors">Browse sectors</a>
+          <a href="#networks">Browse Networks</a>
           <a href="#food-trucks">Food Truck Radar</a>
         </div>
         <div className="col">

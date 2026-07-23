@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getBusiness, getSector, BUSINESSES } from "@/lib/data";
+import { getBusiness, getNetwork, BUSINESSES } from "@/lib/data";
 
 export function generateStaticParams() {
   return BUSINESSES.map((b) => ({ slug: b.slug }));
@@ -29,7 +29,7 @@ export default async function BusinessPage({
   const { slug } = await params;
   const b = getBusiness(slug);
   if (!b) notFound();
-  const sector = getSector(b.sectorId);
+  const network = getNetwork(b.networkId);
 
   return (
     <>
@@ -67,7 +67,7 @@ export default async function BusinessPage({
         </div>
         <div className="grad" />
         <div className="in">
-          <div className="badge">{b.logo} {sector?.name}</div>
+          <div className="badge">{b.logo} {network?.name}</div>
           <h1>{b.name}</h1>
           <div className="meta">
             <span className="stars">★ {b.rating.toFixed(1)}</span>
