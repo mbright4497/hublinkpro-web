@@ -2,7 +2,7 @@
 # HubLinkPro — one-click GitHub sync
 # Duke writes the COMMIT_MSG line before each run. Matt double-clicks. That's it.
 
-COMMIT_MSG="A2P compliance: privacy policy, terms of service, SMS terms + consent capture on lead form"
+COMMIT_MSG="Connect Vercel Git integration - deploy A2P legal pages"
 
 cd "$(dirname "$0")" || exit 1
 echo "=============================================="
@@ -17,7 +17,9 @@ echo
 git add -A || { echo "!! git add failed"; read -n 1 -s -r -p "Press any key to close..."; exit 1; }
 
 if git diff --cached --quiet; then
-  echo "Nothing to commit — working tree already matches main."
+  echo "No file changes — making an empty commit so Vercel still gets a deploy trigger."
+  git commit --allow-empty -m "$COMMIT_MSG" || { echo "!! empty commit failed"; read -n 1 -s -r -p "Press any key to close..."; exit 1; }
+  echo "-> committed (empty): $COMMIT_MSG"
 else
   git commit -m "$COMMIT_MSG" || { echo "!! commit failed"; read -n 1 -s -r -p "Press any key to close..."; exit 1; }
   echo "-> committed: $COMMIT_MSG"
