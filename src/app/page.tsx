@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
+import Hero from "@/components/Hero";
 import {
   NETWORKS,
   rowAvailableNow,
@@ -7,7 +8,8 @@ import {
   rowTopRated,
   rowFoodTrucks,
   rowByNetwork,
-  spotlight,
+  rowFood,
+  foodPickOfDay,
 } from "@/lib/data";
 
 const LIVE_ZIPS = [
@@ -78,7 +80,8 @@ function Row({
 }
 
 export default function Home() {
-  const spot = spotlight();
+  const foodPick = foodPickOfDay();
+  const foodChannels = [foodPick, ...rowFood().filter((b) => b.id !== foodPick.id)];
   return (
     <>
       <Nav />
@@ -93,30 +96,27 @@ export default function Home() {
         <span style={{ color: "var(--color-muted)" }}>detected automatically</span>
       </div>
 
-      {/* Spotlight billboard */}
-      <section className="spot">
-        <div className="art" />
-        <div className="grad" />
-        <div className="in">
-          <div className="badge">🔥 Neighborhood favorite · Paving</div>
-          <h1>{spot.name}</h1>
-          <div className="meta">
-            <span className="stars">★★★★★ {spot.rating.toFixed(1)}</span>
-            <span style={{ color: "var(--color-muted)" }}>({spot.reviews})</span>
-            <span className="verified">✓ HLP Verified</span>
-            <span>
-              · {spot.years} yrs · {spot.jobs} jobs
-            </span>
-          </div>
-          <p>{spot.tagline}</p>
-          <div className="cta">
-            <Link href={`/business/${spot.slug}`} className="btn-primary">
-              ⚡ Connect now
-            </Link>
-            <Link href={`/business/${spot.slug}`} className="btn-ghost">
-              ▶ See their work
-            </Link>
-          </div>
+      {/* Cinematic hero — "Tonight in..." rotating billboard + live radar strip */}
+      <Hero />
+
+      {/* FOOD FRONT DOOR — the daily-habit surface (food is what brings everyone back) */}
+      <section className="row" id="eat" style={{ marginTop: 18 }}>
+        <div className="rowhead">
+          <h2>
+            <span>🍽️</span> Eat Local Tonight · Johnson City
+          </h2>
+          <a className="see" href="#food-trucks">
+            Food Trucks ›
+          </a>
+        </div>
+        <p className="sub" style={{ padding: "0 5vw", margin: "-6px 0 14px" }}>
+          Today&apos;s favorite:{" "}
+          <b style={{ color: "var(--color-light)" }}>{foodPick.name}</b> — {foodPick.tagline}
+        </p>
+        <div className="track">
+          {foodChannels.map((b) => (
+            <PosterCard key={b.id} b={b} />
+          ))}
         </div>
       </section>
 
