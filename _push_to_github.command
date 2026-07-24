@@ -2,7 +2,7 @@
 # HubLinkPro — one-click GitHub sync
 # Duke writes the COMMIT_MSG line before each run. Matt double-clicks. That's it.
 
-COMMIT_MSG="Food front door, channel tiers, flagship channel, cinematic hero + neighborhood radar"
+COMMIT_MSG="A2P compliance: privacy policy, terms of service, SMS terms + consent capture on lead form"
 
 cd "$(dirname "$0")" || exit 1
 echo "=============================================="

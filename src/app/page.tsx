@@ -193,6 +193,11 @@ export default function Home() {
             HubLinkPro
           </div>
           © 2026 HubLinkPro. Trusted pros. Verified work. Your community.
+          <div className="footlegal">
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/sms">SMS Terms</Link>
+          </div>
         </div>
         <div className="col">
           <h4>Neighbors</h4>
@@ -205,6 +210,12 @@ export default function Home() {
           <Link href="/list-your-business">Claim your neighborhood slot</Link>
           <Link href="/list-your-business">List a food truck — free</Link>
           <a href="#automations">HLP Automations</a>
+        </div>
+        <div className="col">
+          <h4>Legal</h4>
+          <Link href="/terms">Terms of Service</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/sms">SMS Terms &amp; Conditions</Link>
         </div>
       </footer>
     </>

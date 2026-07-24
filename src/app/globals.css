@@ -185,3 +185,25 @@ a { color: inherit; text-decoration: none; }
 .field { display: block; margin-bottom: 14px; }
 .field label { display: block; font-size: 13px; color: var(--color-muted); margin-bottom: 6px; font-weight: 600; }
 .field input, .field textarea, .field select { width: 100%; background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 11px; color: #fff; font-size: 15px; padding: 13px 15px; font-family: inherit; }
+
+/* ---- Legal pages (/privacy, /terms, /sms) + consent controls ---- */
+.legal { max-width: 780px; }
+.legal .legal-updated { color: var(--color-muted); font-size: 13px; margin: 0 0 32px; padding-bottom: 20px; border-bottom: 1px solid var(--color-line); }
+.legal h2 { font-size: 19px; font-weight: 800; letter-spacing: -.01em; margin: 34px 0 12px; color: var(--color-light); }
+.legal p { color: var(--color-mist); font-size: 15px; line-height: 1.7; margin: 0 0 14px; }
+.legal ul { color: var(--color-mist); font-size: 15px; line-height: 1.7; margin: 0 0 14px; padding-left: 20px; }
+.legal li { margin-bottom: 9px; }
+.legal b { color: #fff; font-weight: 700; }
+.legal a { color: var(--color-brand2); text-decoration: underline; text-underline-offset: 2px; }
+.legal-callout { background: var(--color-card); border: 1px solid var(--color-line); border-left: 3px solid var(--color-brand); border-radius: 12px; padding: 16px 18px; margin: 0 0 24px !important; }
+.legal-nav { display: flex; flex-wrap: wrap; gap: 22px; margin: 44px 0 16px; padding-top: 24px; border-top: 1px solid var(--color-line); font-size: 14px; font-weight: 700; }
+.legal-contact { color: var(--color-muted) !important; font-size: 13px !important; }
+
+/* Consent checkbox — must render unchecked; never pre-check (TCR violation). */
+.consent { display: flex; gap: 11px; align-items: flex-start; background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 12px; padding: 14px 15px; margin: 4px 0 18px; }
+.consent input[type="checkbox"] { width: 18px; height: 18px; min-width: 18px; margin-top: 2px; accent-color: var(--color-brand); cursor: pointer; }
+.consent span { color: var(--color-mist); font-size: 13px; line-height: 1.6; }
+.consent a { color: var(--color-brand2); text-decoration: underline; }
+.finelegal { color: var(--color-muted); font-size: 12px; line-height: 1.6; margin: 14px 0 0; }
+.finelegal a { color: var(--color-muted); text-decoration: underline; }
+.footlegal { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 12px; font-size: 13px; }
