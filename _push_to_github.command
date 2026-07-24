@@ -2,7 +2,7 @@
 # HubLinkPro — one-click GitHub sync
 # Duke writes the COMMIT_MSG line before each run. Matt double-clicks. That's it.
 
-COMMIT_MSG="Connect Vercel Git integration - deploy A2P legal pages"
+COMMIT_MSG="Align privacy + SMS terms with the co-branded sending model on the paving funnel"
 
 cd "$(dirname "$0")" || exit 1
 echo "=============================================="

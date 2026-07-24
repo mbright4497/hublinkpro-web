@@ -62,12 +62,20 @@ export default function Privacy() {
         described in this policy.
       </p>
       <p>
-        When you submit a request, we pass the details of that request to the matched local
-        business so they can prepare your estimate and perform the work. That business may contact
-        you <b>by phone or email</b>. They do not receive the right to text you under
-        HubLinkPro&apos;s consent, and they do not receive permission to add you to their own
-        marketing lists. If a business ever wants to text you, they must obtain their own separate
-        consent from you directly.
+        <b>Who is actually texting you.</b> HubLinkPro operates the messaging for the local
+        business you requested. That means a text about your request may be co-branded — it may
+        come from the business&apos;s published number and identify that business by name — but it
+        is sent by HubLinkPro on their behalf, under HubLinkPro&apos;s messaging registration and
+        this policy. The consent you give at the form covers <b>HubLinkPro and the specific
+        business you asked about, for the request you submitted</b> — nobody else, and nothing
+        else.
+      </p>
+      <p>
+        That business also receives the details of your request so they can prepare your estimate
+        and perform the work, and may contact you by phone or email. What they do <b>not</b> get
+        is the right to load your number into their own marketing lists, text you about unrelated
+        offers, or pass you along to anyone else. If a business wants to message you beyond the
+        request you made, they must obtain their own separate consent from you directly.
       </p>
 
       <h2>4. Who else sees your information</h2>

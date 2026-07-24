@@ -20,8 +20,9 @@ export default function SmsTerms() {
       <h2>1. Program description</h2>
       <p>
         HubLinkPro operates SMS messaging programs for itself and on behalf of the local
-        businesses listed on our platform. Depending on which form you filled out, you may
-        receive:
+        businesses listed on our platform. Messages may be co-branded with the business you
+        requested and may arrive from that business&apos;s published phone number. Depending on
+        which form you filled out, you may receive:
       </p>
       <ul>
         <li>
@@ -90,15 +91,24 @@ export default function SmsTerms() {
       <p className="legal-callout">
         HubLinkPro does not sell, rent, or share your mobile phone number, your SMS consent, or
         your opt-in data with third parties, affiliates, or partners for their own marketing
-        purposes. Your consent to receive text messages from HubLinkPro applies to HubLinkPro
-        only, and does not transfer to anyone else.
+        purposes.
       </p>
       <p>
-        <b>What that means in practice.</b> When you request a quote, HubLinkPro sends the text
-        messages. We pass your request to the matched local business so they can prepare and
-        deliver your estimate, and that business may contact you <b>by phone or email</b> to
-        complete the job. We do not hand your number to other companies so they can start their
-        own text campaigns, and we do not add you to anyone else&apos;s marketing list.
+        <b>Who the messages come from.</b> HubLinkPro operates the messaging for the local
+        business you requested. A message about your request may therefore be co-branded — it may
+        arrive from that business&apos;s published number and name them directly — but it is sent
+        by HubLinkPro on their behalf, under HubLinkPro&apos;s messaging registration and these
+        terms. Your consent covers <b>HubLinkPro and the specific business you asked about, for
+        the request you submitted</b>. It does not extend to any other company, and it is not
+        transferable.
+      </p>
+      <p>
+        <b>What that means in practice.</b> We pass your request to the matched local business so
+        they can prepare and deliver your estimate, and they may also contact you by phone or
+        email. We do not hand your number to other companies so they can run their own text
+        campaigns, and we do not add you to anyone else&apos;s marketing list. If that business
+        wants to message you about anything beyond the request you made, they need their own
+        consent from you directly.
       </p>
       <p>
         The only parties who ever touch your number on our side are the service providers who
