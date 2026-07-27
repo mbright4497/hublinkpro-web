@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BUSINESSES, rowFood, getBusiness } from "@/lib/data";
+import { BUSINESSES, rowFood, flagshipChannel } from "@/lib/data";
 
 const CITY = "Johnson City";
 
 // Featured billboard rotation — food-weighted (food is the front door), plus the flagship pro.
+// The flagship is selected from the data by rating, never by a hardcoded slug.
 const foodFeatured = [...rowFood()].sort((a, b) => b.rating - a.rating).slice(0, 3);
-const flagship = getBusiness("reliable-paving");
+const flagship = flagshipChannel();
 const FEATURED = [...foodFeatured, ...(flagship ? [flagship] : [])];
 
-// Live "radar" counters — real state from the catalog.
-const openNowCount = BUSINESSES.filter((b) => b.openNow).length;
-const trucksRolling = BUSINESSES.filter((b) => b.foodTruck && b.openNow).length;
-const prosAvailable = BUSINESSES.filter((b) => b.networkId !== "food" && b.openNow).length;
+// Live "radar" counters — real state from the catalog. House Channel excluded: these
+// counters are a claim about local businesses, so HubLinkPro must not inflate them.
+const LOCAL = BUSINESSES.filter((b) => !b.house);
+const openNowCount = LOCAL.filter((b) => b.openNow).length;
+const trucksRolling = LOCAL.filter((b) => b.foodTruck && b.openNow).length;
+const prosAvailable = LOCAL.filter((b) => b.networkId !== "food" && b.openNow).length;
 
 // Radar pins — scattered live businesses across the neighborhood.
 const RADAR_PINS = [

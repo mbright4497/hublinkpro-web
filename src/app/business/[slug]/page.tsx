@@ -33,12 +33,13 @@ export default async function BusinessPage({
   if (!b) notFound();
   const network = getNetwork(b.networkId);
 
-  const heroBadge =
-    b.tier === "favorite"
-      ? `🔥 Neighborhood Favorite · ${network?.name ?? ""}`
-      : b.tier === "pro"
-      ? `★ Verified Pro · ${network?.name ?? ""}`
-      : `${b.logo} ${network?.name ?? ""}`;
+  const heroBadge = b.house
+    ? "🅷 This is a live HubLinkPro Channel"
+    : b.tier === "favorite"
+    ? `🔥 Neighborhood Favorite · ${network?.name ?? ""}`
+    : b.tier === "pro"
+    ? `★ Verified Pro · ${network?.name ?? ""}`
+    : `${b.logo} ${network?.name ?? ""}`;
 
   return (
     <>
@@ -78,25 +79,41 @@ export default async function BusinessPage({
         <div className="in">
           <div className="badge">{heroBadge}</div>
           <h1>{b.name}</h1>
+          {/* Every stat here renders only when we actually have it. A zero is never
+              dressed up as a number — that's how a real listing stays trustworthy. */}
           <div className="meta">
-            <span className="stars">★ {b.rating.toFixed(1)}</span>
-            <span style={{ color: "var(--color-muted)" }}>({b.reviews} Google reviews)</span>
+            {b.reviews > 0 && (
+              <>
+                <span className="stars">★ {b.rating.toFixed(1)}</span>
+                <span style={{ color: "var(--color-muted)" }}>({b.reviews} Google reviews)</span>
+              </>
+            )}
             {b.verified && <span className="verified">✓ HLP Verified</span>}
             <span>· {b.neighborhood}</span>
             {b.jobs > 0 && <span>· {b.jobs} jobs</span>}
-            <span>· {b.years} yrs in business</span>
+            {b.years > 0 && <span>· {b.years} yrs in business</span>}
           </div>
           <p>{b.tagline}</p>
           <div className="cta">
             <a href="#connect" className="btn-primary">
-              {b.foodTruck ? "🛒 Order now" : b.emergency ? "🚨 Request service" : "⚡ Connect now"}
+              {b.house
+                ? "⚡ Claim your slot"
+                : b.foodTruck
+                ? "🛒 Order now"
+                : b.emergency
+                ? "🚨 Request service"
+                : "⚡ Connect now"}
             </a>
             {b.phone && (
               <a href={`tel:${b.phone.replace(/[^0-9+]/g, "")}`} className="btn-ghost">
                 📞 {b.phone}
               </a>
             )}
-            {!b.phone && b.tier === "free" && b.website ? (
+            {b.house && b.website ? (
+              <a href="#your-channel-services" className="btn-ghost">
+                🎬 See what&apos;s included
+              </a>
+            ) : !b.phone && b.tier === "free" && b.website ? (
               <a href={b.website} target="_blank" rel="noopener noreferrer" className="btn-ghost">
                 🌐 Visit website
               </a>
@@ -110,12 +127,22 @@ export default async function BusinessPage({
       {/* About */}
       <section className="section">
         <h2>About</h2>
-        <p className="sub" style={{ maxWidth: 640, fontSize: 16, color: "var(--color-mist)" }}>
-          {b.name} is a {b.verified ? "HubLinkPro-verified " : ""}
-          {b.category.toLowerCase()} serving {b.neighborhood} and the surrounding Tri-Cities.
-          {b.years > 0 ? ` ${b.years} years in business` : ""}
-          {b.jobs > 0 ? ` and ${b.jobs}+ completed jobs` : ""}. {b.tagline}
-        </p>
+        {b.house ? (
+          <p className="sub" style={{ maxWidth: 680, fontSize: 16, color: "var(--color-mist)" }}>
+            You&apos;re looking at a real HubLinkPro Channel — ours. This is the exact page a
+            business gets: its own branded space with a reel, a work gallery, services, and a
+            direct line to the neighbors who need it. HubLinkPro is where people in{" "}
+            {b.neighborhood} find the pros they actually call, and the growth engine that keeps
+            those pros booked. Scroll it, then picture your name on it.
+          </p>
+        ) : (
+          <p className="sub" style={{ maxWidth: 640, fontSize: 16, color: "var(--color-mist)" }}>
+            {b.name} is a {b.verified ? "HubLinkPro-verified " : ""}
+            {b.category.toLowerCase()} serving {b.neighborhood} and the surrounding Tri-Cities.
+            {b.years > 0 ? ` ${b.years} years in business` : ""}
+            {b.jobs > 0 ? ` and ${b.jobs}+ completed jobs` : ""}. {b.tagline}
+          </p>
+        )}
         {b.website && (
           <p className="sub" style={{ marginTop: 8 }}>
             🌐{" "}
@@ -134,8 +161,10 @@ export default async function BusinessPage({
       {/* Our Work — gallery (full Channel) */}
       {b.gallery && b.gallery.length > 0 && (
         <section className="section">
-          <h2>Our Work</h2>
-          <p className="sub">Recent jobs from {b.name}.</p>
+          <h2>{b.house ? "Inside the platform" : "Our Work"}</h2>
+          <p className="sub">
+            {b.house ? "The surfaces your business shows up on." : `Recent jobs from ${b.name}.`}
+          </p>
           <div
             style={{
               display: "grid",
@@ -177,7 +206,7 @@ export default async function BusinessPage({
 
       {/* Services (Pro + Favorite) */}
       {b.services && b.services.length > 0 && (
-        <section className="section">
+        <section className="section" id="your-channel-services">
           <h2>Services</h2>
           <p className="sub">What {b.name} offers.</p>
           <div
@@ -211,11 +240,37 @@ export default async function BusinessPage({
         </section>
       )}
 
+      {/* Why choose us — stands in for showcased reviews on Channels that don't have
+          real ones yet. Nothing here is a testimonial, so nothing here can be a fake one. */}
+      {b.pitch && b.pitch.length > 0 && (
+        <section className="section">
+          <h2>{b.house ? "Why pros choose HubLinkPro" : `Why neighbors choose ${b.name}`}</h2>
+          <p className="sub">
+            {b.house
+              ? "The difference between owning a slot and buying a lead."
+              : `What sets ${b.name} apart.`}
+          </p>
+          <div className="autogrid">
+            {b.pitch.map((p) => (
+              <div key={p.h} className="autocard">
+                <div className="ic">{p.ic}</div>
+                <h3>{p.h}</h3>
+                <p>{p.p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Commercial reel — Verified Pro and Neighborhood Favorite only */}
       {b.tier !== "free" && (
         <section className="section">
           <h2>Watch {b.name}</h2>
-          <p className="sub">Their commercial reel — the video that runs on their HubLinkPro Channel.</p>
+          <p className="sub">
+            {b.house
+              ? "Every Verified Pro and Neighborhood Favorite gets a reel in this slot. This one is ours."
+              : "Their commercial reel — the video that runs on their HubLinkPro Channel."}
+          </p>
           <div
             style={{
               position: "relative",
@@ -286,8 +341,9 @@ export default async function BusinessPage({
         </section>
       )}
 
-      {/* Hyperlocal reach — Neighborhood Favorite only (the marquee tier) */}
-      {b.tier === "favorite" && (
+      {/* Hyperlocal reach — Neighborhood Favorite only (the marquee tier).
+          Suppressed on the house Channel: HubLinkPro doesn't buy a slot from itself. */}
+      {b.tier === "favorite" && !b.house && (
         <section className="section">
           <h2>🔥 Hyperlocal reach</h2>
           <p className="sub" style={{ maxWidth: 640 }}>
@@ -312,6 +368,24 @@ export default async function BusinessPage({
         </section>
       )}
 
+      {/* Coverage — house Channel only. Where slots are open right now. */}
+      {b.house && (
+        <section className="section">
+          <h2>📍 Live now — and open slots</h2>
+          <p className="sub" style={{ maxWidth: 640 }}>
+            Every ZIP with a post office is a sellable slot. One business, per category, per ZIP —
+            when it&apos;s taken, it&apos;s taken. These are live today, with more going up every week.
+          </p>
+          <div className="chips">
+            {FAVORITE_ZIPS.map((z) => (
+              <span key={z} className="chip">
+                📍 {z}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Hours & contact */}
       {(b.hours || b.phone) && (
         <section className="section">
@@ -326,10 +400,14 @@ export default async function BusinessPage({
 
       {/* Connect */}
       <section className="section" id="connect">
-        <h2>Connect with {b.name}</h2>
-        <p className="sub">One tap. We route you straight to them — no forms sold to seven strangers.</p>
+        <h2>{b.house ? "Claim your neighborhood slot" : `Connect with ${b.name}`}</h2>
+        <p className="sub">
+          {b.house
+            ? "Free to start. Food trucks free forever. Never more than 3 pros per service, per area — so the slot you take is a slot your competitor can't."
+            : "One tap. We route you straight to them — no forms sold to seven strangers."}
+        </p>
         <Link href="/list-your-business" className="btn-primary">
-          {b.foodTruck ? "🛒 Order now" : "⚡ Connect now"}
+          {b.house ? "⚡ List my business" : b.foodTruck ? "🛒 Order now" : "⚡ Connect now"}
         </Link>
       </section>
 

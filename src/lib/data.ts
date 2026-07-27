@@ -21,6 +21,11 @@ export type Tier = "free" | "pro" | "favorite";
 export type Review = { author: string; stars: number; text: string };
 export type GalleryItem = { label: string; art: string };
 
+// A "why choose us" block. Used on Channels where showcased reviews either don't exist yet
+// or would have to be invented — notably HubLinkPro's own house Channel. Never fabricate a
+// review for a real company: the FTC fake-review rule carries a per-violation penalty.
+export type PitchBlock = { ic: string; h: string; p: string };
+
 export type Business = {
   id: number;
   slug: string;
@@ -34,6 +39,11 @@ export type Business = {
   services?: string[]; // services the Channel offers (Pro+ show these)
   gallery?: GalleryItem[]; // "Our Work" photo placeholders (full Channel)
   reviewsList?: Review[]; // showcased reviews (full Channel)
+  pitch?: PitchBlock[]; // "why pros choose us" — shown where reviews are absent by design
+  // HOUSE CHANNEL — HubLinkPro's own listing. It is the live demo of the product, not a
+  // local pro. Excluded from every "pros near you" row so it never competes with a paying
+  // business for a slot, and rendered with business-owner CTAs instead of homeowner ones.
+  house?: boolean;
   logo: string; // emoji placeholder until real logo
   art: string; // css class for the styled poster placeholder
   rating: number;
@@ -120,6 +130,72 @@ export const BUSINESSES: Business[] = [
   { id: 14, slug: "appalachian-pest-control", name: "Appalachian Pest Control", category: "Pest Control", networkId: "home", tier: "free", website: "https://appalachianpest.com", logo: "🐜", art: "a-generic", rating: 4.7, reviews: 96, years: 13, jobs: 421, tagline: "Termites, mosquitoes, wildlife — quarterly plans.", neighborhood: "Kingsport", verified: true, emergency: false, openNow: true, foodTruck: false },
   { id: 15, slug: "state-line-garage-doors", name: "State Line Garage Doors", category: "Garage Doors", networkId: "home", tier: "free", website: "https://statelinegaragedoors.com", logo: "🚪", art: "a-generic", rating: 4.8, reviews: 74, years: 10, jobs: 233, tagline: "Broken spring? Same-day fix, most models in stock.", neighborhood: "Bristol", verified: true, emergency: true, openNow: true, foodTruck: false },
   { id: 16, slug: "cornerstone-cpa", name: "Cornerstone CPA", category: "Accounting & Tax", networkId: "financial", tier: "free", website: "https://cornerstonecpa.com", logo: "📊", art: "a-generic", rating: 4.9, reviews: 61, years: 17, jobs: 0, tagline: "Small-business books & tax, done right.", neighborhood: "Johnson City", verified: true, emergency: false, openNow: false, foodTruck: false },
+  // ── HOUSE CHANNEL ────────────────────────────────────────────────────────────
+  // HubLinkPro's own Channel. This is how we advertise for ourselves: instead of a
+  // pitch page, a business owner sees the actual finished product they'd be buying.
+  // Built at the Neighborhood Favorite tier so every premium surface renders.
+  // DELIBERATELY has no reviewsList and rating/reviews/years = 0 — nothing on this
+  // page is invented. Fill in real numbers only when they're real. `pitch` carries
+  // the persuasion instead.
+  {
+    id: 17,
+    slug: "hublinkpro",
+    name: "HubLinkPro",
+    category: "Local Marketing & Lead Generation",
+    networkId: "tech",
+    tier: "favorite",
+    house: true,
+    website: "https://hublinkpro.com",
+    services: [
+      "Free business listing",
+      "Verified Pro profile",
+      "Neighborhood Favorite — exclusive ZIP slot",
+      "Speed-to-lead AI follow-up",
+      "Review engine",
+      "Missed-call text-back",
+      "Commercial reel on your Channel",
+    ],
+    gallery: [
+      { label: "Your Channel — your own branded space", art: "a-hlp" },
+      { label: "Discovery rows neighbors actually browse", art: "a-generic" },
+      { label: "Neighborhood radar — live in your ZIP", art: "a-hlp" },
+      { label: "Exclusive slots, one per category per ZIP", art: "a-generic" },
+    ],
+    pitch: [
+      {
+        ic: "🔒",
+        h: "One slot — not one lead sold seven times",
+        p: "We don't auction the same inquiry to every contractor in the county. A Neighborhood Favorite slot is exclusive: one business, one category, one ZIP. The slot you take is the slot your competitor can't.",
+      },
+      {
+        ic: "⚡",
+        h: "Answered in seconds, not hours",
+        p: "Speed-to-lead AI replies the moment someone reaches out — before your competitor has opened their email. Missed call? They get a text back automatically.",
+      },
+      {
+        ic: "📡",
+        h: "Hyperlocal by design",
+        p: "You buy the ZIPs you actually serve. No paying for reach three counties away, no bidding against national money for clicks in your own town.",
+      },
+      {
+        ic: "🎬",
+        h: "A Channel, not a directory row",
+        p: "Commercial reel, work gallery, services, hours — your own space, built to be browsed like a streaming app instead of skimmed like a phone book.",
+      },
+    ],
+    logo: "🅷",
+    art: "a-hlp",
+    rating: 0,
+    reviews: 0,
+    years: 0,
+    jobs: 0,
+    tagline: "The local discovery platform your neighbors actually open — and the growth engine behind every pro listed on it.",
+    neighborhood: "Tri-Cities",
+    verified: true,
+    emergency: false,
+    openNow: true,
+    foodTruck: false,
+  },
 ];
 
 export function getBusiness(slug: string): Business | undefined {
@@ -143,16 +219,34 @@ export function tierLabel(tier: Tier): string {
   return tier === "favorite" ? "Neighborhood Favorite" : tier === "pro" ? "Verified Pro" : "Free Listing";
 }
 
+// HubLinkPro's own house Channel — the self-advertisement. Never a row candidate.
+export function houseChannel(): Business | undefined {
+  return BUSINESSES.find((b) => b.house);
+}
+
+// Every real listed business, house Channel excluded. All discovery rows read from this,
+// so HubLinkPro can never take a slot away from a business that's paying for one.
+const LOCAL = () => BUSINESSES.filter((b) => !b.house);
+
 // Row selectors (geography-agnostic; later these become PROPHET-scored / location-aware queries)
-export const rowAvailableNow = () => BUSINESSES.filter((b) => b.openNow && !b.foodTruck).slice(0, 8);
-export const rowEmergency = () => BUSINESSES.filter((b) => b.emergency);
-export const rowTopRated = () => [...BUSINESSES].filter((b) => !b.foodTruck).sort((a, b) => b.rating - a.rating).slice(0, 8);
-export const rowFoodTrucks = () => BUSINESSES.filter((b) => b.foodTruck);
-export const rowByNetwork = (networkId: string) => BUSINESSES.filter((b) => b.networkId === networkId);
-export const spotlight = () => getBusiness("reliable-paving")!;
+export const rowAvailableNow = () => LOCAL().filter((b) => b.openNow && !b.foodTruck).slice(0, 8);
+export const rowEmergency = () => LOCAL().filter((b) => b.emergency);
+export const rowTopRated = () => [...LOCAL()].filter((b) => !b.foodTruck).sort((a, b) => b.rating - a.rating).slice(0, 8);
+export const rowFoodTrucks = () => LOCAL().filter((b) => b.foodTruck);
+export const rowByNetwork = (networkId: string) => LOCAL().filter((b) => b.networkId === networkId);
+
+// The flagship pro we feature in the hero/spotlight. Chosen from the DATA — highest-rated
+// premium local Channel — never a hardcoded slug. Whoever earns the top slot gets it.
+export function flagshipChannel(): Business | undefined {
+  const ranked = [...LOCAL()]
+    .filter((b) => !b.foodTruck)
+    .sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
+  return ranked.find((b) => b.tier === "favorite") ?? ranked.find((b) => b.tier === "pro") ?? ranked[0];
+}
+export const spotlight = () => flagshipChannel();
 
 // FOOD FRONT DOOR — food is the daily-habit surface that pulls people in.
-export const rowFood = () => BUSINESSES.filter((b) => b.networkId === "food");
+export const rowFood = () => LOCAL().filter((b) => b.networkId === "food");
 
 // Deterministic "food pick of the day" — rotates daily so there's a fresh reason to open the app.
 export function foodPickOfDay(): Business {

@@ -146,6 +146,16 @@ a { color: inherit; text-decoration: none; }
 .a-coffee { background: radial-gradient(400px 200px at 55% 25%, rgba(250,204,21,.28), transparent), linear-gradient(160deg, #231a05, #1c1408); }
 .a-pizza { background: radial-gradient(400px 200px at 55% 25%, rgba(239,68,68,.3), transparent), linear-gradient(160deg, #241009, #1e1410); }
 .a-generic { background: radial-gradient(400px 200px at 55% 22%, rgba(251,146,60,.24), transparent), linear-gradient(160deg, #14203a, #101a2e); }
+/* House Channel art — HubLinkPro brand amber over deep ink. */
+.a-hlp { background: radial-gradient(420px 220px at 55% 22%, rgba(245,158,11,.38), transparent), radial-gradient(300px 240px at 82% 78%, rgba(251,146,60,.22), transparent), linear-gradient(160deg, #1b1607, #0b1526); }
+
+/* Channel showcase — the "see what your Channel looks like" band on the homepage. */
+.showcase { display: grid; grid-template-columns: minmax(0,1.1fr) minmax(0,.9fr); gap: 30px; align-items: center; }
+.showcase .showcase-copy h2 { margin-bottom: 6px; }
+.showcase .showcase-track { overflow: visible; padding: 0; }
+@media (max-width: 860px) {
+  .showcase { grid-template-columns: 1fr; gap: 18px; }
+}
 
 /* ---------- Section shells ---------- */
 .section { padding: 46px 5vw 10px; }

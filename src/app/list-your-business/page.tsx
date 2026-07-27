@@ -68,29 +68,31 @@ export default function ListYourBusiness() {
           </div>
         ) : (
           <form onSubmit={onSubmit}>
+            {/* Placeholders stay generic on purpose. Never use a real listed client as
+                filler — it reads like a paid endorsement and dates the form. */}
             <div className="field">
               <label>Business name</label>
-              <input name="business" required placeholder="Reliable Paving" />
+              <input name="business" required placeholder="Your business name" />
             </div>
             <div className="field">
               <label>Your name</label>
-              <input name="name" required placeholder="Joe Smith" />
+              <input name="name" required placeholder="First and last name" />
             </div>
             <div className="field">
               <label>Email</label>
-              <input name="email" type="email" required placeholder="joe@reliablepaving.com" />
+              <input name="email" type="email" required placeholder="you@yourbusiness.com" />
             </div>
             <div className="field">
               <label>Phone</label>
-              <input name="phone" placeholder="(423) 555-0123" />
+              <input name="phone" placeholder="(555) 555-0123" />
             </div>
             <div className="field">
               <label>Category</label>
-              <input name="category" placeholder="Paving & Asphalt" />
+              <input name="category" placeholder="What you do — e.g. HVAC, roofing, catering" />
             </div>
             <div className="field">
               <label>Neighborhood / ZIP you serve</label>
-              <input name="area" placeholder="37604 · Johnson City" />
+              <input name="area" placeholder="ZIP code · city" />
             </div>
             {/* SMS consent — MUST render unchecked. A pre-checked box is an
                 automatic A2P/TCR failure. Do not add defaultChecked. */}

@@ -2,7 +2,7 @@
 # HubLinkPro — one-click GitHub sync
 # Duke writes the COMMIT_MSG line before each run. Matt double-clicks. That's it.
 
-COMMIT_MSG="Align privacy + SMS terms with the co-branded sending model on the paving funnel"
+COMMIT_MSG="Add HubLinkPro house Channel (self-advertisement) + generic form placeholders"
 
 cd "$(dirname "$0")" || exit 1
 echo "=============================================="

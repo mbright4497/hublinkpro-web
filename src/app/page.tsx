@@ -10,6 +10,7 @@ import {
   rowByNetwork,
   rowFood,
   foodPickOfDay,
+  houseChannel,
 } from "@/lib/data";
 
 const LIVE_ZIPS = [
@@ -39,6 +40,7 @@ function Nav() {
         <a href="#discover">Discover</a>
         <a href="#networks">Networks</a>
         <a href="#food-trucks">Food Trucks</a>
+        <a href="#your-channel">Your Channel</a>
         <a href="#automations">HLP Automations</a>
       </div>
       <Link href="/list-your-business" className="listbtn">
@@ -74,6 +76,37 @@ function Row({
         {items.map((b) => (
           <PosterCard key={b.id} b={b} emergency={emergency} />
         ))}
+      </div>
+    </section>
+  );
+}
+
+// The self-advertisement: rather than pitch the platform, show a business owner the
+// finished product. The card links straight to our own fully loaded Channel.
+function ChannelShowcase() {
+  const house = houseChannel();
+  if (!house) return null;
+  return (
+    <section className="section showcase" id="your-channel">
+      <div className="showcase-copy">
+        <div className="badge">🅷 For business owners</div>
+        <h2>See what your Channel looks like</h2>
+        <p className="sub" style={{ maxWidth: 460 }}>
+          Not a listing in a directory — your own branded space. Reel, work gallery, services,
+          hours, and a direct line to the neighbors who need you. This one is ours. Open it,
+          then picture your name on it.
+        </p>
+        <div className="hero-cta" style={{ marginTop: 4 }}>
+          <Link href={`/business/${house.slug}`} className="btn-primary">
+            Tour a live Channel
+          </Link>
+          <Link href="/list-your-business" className="btn-ghost">
+            Claim your slot →
+          </Link>
+        </div>
+      </div>
+      <div className="track showcase-track">
+        <PosterCard b={house} />
       </div>
     </section>
   );
@@ -143,6 +176,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Our own Channel — the product, demonstrated instead of described */}
+      <ChannelShowcase />
+
       {/* HLP Automations */}
       <section className="section" id="automations">
         <h2>HLP Automations</h2>
@@ -209,6 +245,7 @@ export default function Home() {
           <h4>Businesses</h4>
           <Link href="/list-your-business">Claim your neighborhood slot</Link>
           <Link href="/list-your-business">List a food truck — free</Link>
+          <Link href="/business/hublinkpro">See a live Channel</Link>
           <a href="#automations">HLP Automations</a>
         </div>
         <div className="col">
