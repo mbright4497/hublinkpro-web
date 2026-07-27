@@ -109,7 +109,7 @@ export default async function BusinessPage({
                 📞 {b.phone}
               </a>
             )}
-            {b.house && b.website ? (
+            {b.house && !b.phone && b.website ? (
               <a href="#your-channel-services" className="btn-ghost">
                 🎬 See what&apos;s included
               </a>
@@ -393,7 +393,9 @@ export default async function BusinessPage({
           <div className="chips">
             {b.hours && <span className="chip">🕐 {b.hours}</span>}
             {b.phone && <span className="chip">📞 {b.phone}</span>}
-            <span className="chip">📍 {b.neighborhood} & the Tri-Cities</span>
+            <span className="chip">
+              {b.house ? "📍 Tri-Cities TN/VA — more going live every week" : `📍 ${b.neighborhood} & the Tri-Cities`}
+            </span>
           </div>
         </section>
       )}

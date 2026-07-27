@@ -146,6 +146,11 @@ export const BUSINESSES: Business[] = [
     tier: "favorite",
     house: true,
     website: "https://hublinkpro.com",
+    // Matt's direct line for now — NOT 8455. 8455 is published across the paving funnel as
+    // Reliable Paving's number and is the A2P sending identity; reusing it here would muddy
+    // the co-branded consent story. Swap to a dedicated HLP number when there is one.
+    phone: "(423) 737-4331",
+    hours: "Platform live 24/7 · We answer Mon–Fri, 9:00 AM – 5:00 PM ET",
     services: [
       "Free business listing",
       "Verified Pro profile",
