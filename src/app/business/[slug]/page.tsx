@@ -371,10 +371,10 @@ export default async function BusinessPage({
       {/* Coverage — house Channel only. Where slots are open right now. */}
       {b.house && (
         <section className="section">
-          <h2>📍 Live now — and open slots</h2>
+          <h2>📍 Open slots by ZIP</h2>
           <p className="sub" style={{ maxWidth: 640 }}>
             Every ZIP with a post office is a sellable slot. One business, per category, per ZIP —
-            when it&apos;s taken, it&apos;s taken. These are live today, with more going up every week.
+            when it&apos;s taken, it&apos;s taken. These ZIPs are open for founding listings.
           </p>
           <div className="chips">
             {FAVORITE_ZIPS.map((z) => (
@@ -414,7 +414,7 @@ export default async function BusinessPage({
       </section>
 
       <footer className="foot">
-        <div className="copy">© 2026 HubLinkPro. Trusted pros. Verified work. Your community.</div>
+        <div className="copy">© 2026 HubLinkPro. Local discovery for the Tri-Cities. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.</div>
         <div className="col">
           <h4>Neighbors</h4>
           <Link href="/">Discover local pros</Link>

@@ -4,11 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "HubLinkPro — Stop searching. Start discovering.",
   description:
-    "Browse your neighborhood's best local businesses like you browse Netflix — home pros, restaurants, food trucks and more. Trusted pros. Verified work. Your community.",
+    "Local discovery for Johnson City and Kingsport: food trucks, home pros and more. Founding listings are open.",
   openGraph: {
     title: "HubLinkPro — Your neighborhood's best, all in one place.",
     description:
-      "Browse and connect with trusted local pros in one tap. Max 3 per service, per neighborhood. Zero noise.",
+      "Local businesses and food trucks in Johnson City and Kingsport. Founding listings are open.",
     type: "website",
   },
 };

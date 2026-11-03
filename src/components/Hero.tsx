@@ -47,7 +47,29 @@ export default function Hero() {
   }, [paused]);
 
   const b = FEATURED[i] ?? FEATURED[0];
-  if (!b) return null;
+  if (!b) {
+    return (
+      <section className="hero">
+        <div className="hero-bg a-hlp" style={{ opacity: 1 }} />
+        <div className="hero-scrim" />
+        <div className="hero-in">
+          <span className="hero-eyebrow">Opening in the Tri-Cities</span>
+          <h1>Local discovery for the Tri-Cities</h1>
+          <p className="lead">
+            Johnson City and Kingsport. Founding listings are open now. Food trucks list free.
+          </p>
+          <div className="hero-cta">
+            <Link href="/list-your-business" className="btn-primary">
+              List your business
+            </Link>
+            <Link href="/list-your-business" className="btn-ghost">
+              List a food truck — free →
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section

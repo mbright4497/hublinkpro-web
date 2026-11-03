@@ -18,7 +18,7 @@ export async function generateMetadata({
   if (!n) return { title: "HubLinkPro" };
   return {
     title: `${n.name} — HubLinkPro`,
-    description: `Browse trusted ${n.name} pros across the Tri-Cities. Max 3 per service, per neighborhood.`,
+    description: `${n.name} in the Tri-Cities. Founding listings are open.`,
   };
 }
 
@@ -60,8 +60,8 @@ export default async function NetworkPage({
           <h1>{network.name}</h1>
           <p>
             {channels.length > 0
-              ? `${categories.length} categor${categories.length === 1 ? "y" : "ies"} · ${channels.length} verified channel${channels.length === 1 ? "" : "s"} in the Tri-Cities. Max 3 per service, per neighborhood.`
-              : "This Network is opening up. Trusted channels are being verified now."}
+              ? `${categories.length} categor${categories.length === 1 ? "y" : "ies"} · ${channels.length} channel${channels.length === 1 ? "" : "s"} in the Tri-Cities. Max 3 per service, per neighborhood.`
+              : "This Network is opening up. Founding listings are open."}
           </p>
         </div>
       </section>
@@ -70,7 +70,7 @@ export default async function NetworkPage({
         <section className="section">
           <h2>Channels coming soon</h2>
           <p className="sub">
-            We&apos;re verifying the best {network.name.toLowerCase()} pros in your neighborhood. Want your slot?
+            No {network.name.toLowerCase()} listings yet. Want to be one of the first?
           </p>
           <Link href="/list-your-business" className="btn-primary">
             Claim your Channel →
@@ -98,7 +98,7 @@ export default async function NetworkPage({
       )}
 
       <footer className="foot">
-        <div className="copy">© 2026 HubLinkPro. Trusted pros. Verified work. Your community.</div>
+        <div className="copy">© 2026 HubLinkPro. Local discovery for the Tri-Cities. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.</div>
         <div className="col">
           <h4>Neighbors</h4>
           <Link href="/">Discover local pros</Link>

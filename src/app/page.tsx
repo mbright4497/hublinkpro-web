@@ -23,10 +23,10 @@ const LIVE_ZIPS = [
 ];
 
 const AUTOMATIONS = [
-  { ic: "⚡", h: "Speed-to-Lead AI", p: "Every inquiry answered in seconds — before your competitor even sees it." },
-  { ic: "⭐", h: "Review Engine", p: "Turn happy jobs into a steady stream of real, verified 5-star reviews." },
-  { ic: "📡", h: "Neighborhood Radar", p: "Know which streets need your service before the homeowner does." },
-  { ic: "📞", h: "Missed-Call Rescue", p: "Missed a call? We text them back instantly so the lead never gets away." },
+  { ic: "⚡", h: "Speed-to-Lead AI", p: "Automatic follow-up when someone reaches out to your business." },
+  { ic: "⭐", h: "Review Engine", p: "Ask every customer for an honest review after the job." },
+  { ic: "📡", h: "Neighborhood Radar", p: "Neighborhood-level demand signals for the services you offer." },
+  { ic: "📞", h: "Missed-Call Rescue", p: "Automatic text-back when you miss a call." },
 ];
 
 function Nav() {
@@ -114,44 +114,49 @@ function ChannelShowcase() {
 
 export default function Home() {
   const foodPick = foodPickOfDay();
-  const foodChannels = [foodPick, ...rowFood().filter((b) => b.id !== foodPick.id)];
+  const foodChannels = foodPick ? [foodPick, ...rowFood().filter((b) => b.id !== foodPick.id)] : [];
   return (
     <>
       <Nav />
 
-      <div className="loc" id="discover">
-        <span className="ping" />
-        Showing pros in&nbsp;<b>Johnson City · 37604</b>
-        <a className="chg" href="#">
-          change
-        </a>
-        &nbsp;·&nbsp;
-        <span style={{ color: "var(--color-muted)" }}>detected automatically</span>
-      </div>
+      <div id="discover" />
 
       {/* Cinematic hero — "Tonight in..." rotating billboard + live radar strip */}
       <Hero />
 
       {/* FOOD FRONT DOOR — the daily-habit surface (food is what brings everyone back) */}
+      {foodPick ? (
       <section className="row" id="eat" style={{ marginTop: 18 }}>
-        <div className="rowhead">
-          <h2>
-            <span>🍽️</span> Eat Local Tonight · Johnson City
-          </h2>
-          <a className="see" href="#food-trucks">
-            Food Trucks ›
-          </a>
-        </div>
-        <p className="sub" style={{ padding: "0 5vw", margin: "-6px 0 14px" }}>
-          Today&apos;s favorite:{" "}
-          <b style={{ color: "var(--color-light)" }}>{foodPick.name}</b> — {foodPick.tagline}
-        </p>
-        <div className="track">
-          {foodChannels.map((b) => (
-            <PosterCard key={b.id} b={b} />
-          ))}
-        </div>
-      </section>
+          <div className="rowhead">
+            <h2>
+              <span>🍽️</span> Eat Local Tonight · Johnson City
+            </h2>
+            <a className="see" href="#food-trucks">
+              Food Trucks ›
+            </a>
+          </div>
+          <p className="sub" style={{ padding: "0 5vw", margin: "-6px 0 14px" }}>
+            Today&apos;s favorite:{" "}
+            <b style={{ color: "var(--color-light)" }}>{foodPick.name}</b> — {foodPick.tagline}
+          </p>
+          <div className="track">
+            {foodChannels.map((b) => (
+              <PosterCard key={b.id} b={b} />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="section" id="eat" style={{ marginTop: 18 }}>
+          <h2>🍽️ Food trucks: list free</h2>
+          <p className="sub">
+            We&apos;re signing up the first food trucks in Johnson City and Kingsport. Post where
+            you&apos;re parked today and let neighbors find you.
+          </p>
+          <Link href="/list-your-business" className="btn-primary">
+            List a food truck — free
+          </Link>
+        </section>
+      )}
 
       {/* Grid-first rows */}
       <Row title="Available Right Now" icon="🟢" items={rowAvailableNow()} />
@@ -182,7 +187,7 @@ export default function Home() {
       {/* HLP Automations */}
       <section className="section" id="automations">
         <h2>HLP Automations</h2>
-        <p className="sub">The AI growth engine behind every listed business.</p>
+        <p className="sub">In development. Founding members get first access.</p>
         <div className="autogrid">
           {AUTOMATIONS.map((a) => (
             <div key={a.h} className="autocard">
@@ -196,8 +201,8 @@ export default function Home() {
 
       {/* Live coverage */}
       <section className="section">
-        <h2>Live now in the Tri-Cities</h2>
-        <p className="sub">Neighborhood by neighborhood. More going live every week.</p>
+        <h2>Opening in the Tri-Cities</h2>
+        <p className="sub">Founding listings are open in these ZIPs.</p>
         <div className="chips">
           {LIVE_ZIPS.map((z) => (
             <span key={z} className="chip">
@@ -228,7 +233,7 @@ export default function Home() {
             </span>
             HubLinkPro
           </div>
-          © 2026 HubLinkPro. Trusted pros. Verified work. Your community.
+          © 2026 HubLinkPro. Local discovery for the Tri-Cities. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.
           <div className="footlegal">
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>
