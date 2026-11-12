@@ -67,6 +67,9 @@ export default function Hero() {
               How it works
             </a>
           </div>
+          <p className="hero-signin">
+            Already have a Channel? <Link href="/login">Sign in</Link>
+          </p>
         </div>
       </section>
     );

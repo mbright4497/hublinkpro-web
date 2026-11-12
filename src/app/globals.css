@@ -281,3 +281,9 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
   .hero.hero-empty { height: auto; min-height: 0; max-height: none; }
   .hero.hero-empty .hero-in { position: relative; left: auto; right: auto; bottom: auto; padding: 44px 6% 34px; }
 }
+
+/* Sign in */
+.nav .signin { color: var(--color-mist); font-size: 14px; font-weight: 600; margin-left: auto; margin-right: 16px; }
+@media (max-width: 480px) { .nav .signin { display: none; } }
+.hero-signin { margin: 4px 0 0; font-size: 14px; color: var(--color-mist); }
+.hero-signin a { color: var(--color-brand2); font-weight: 700; text-decoration: underline; }
