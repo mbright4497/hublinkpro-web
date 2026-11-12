@@ -138,3 +138,15 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export async function setRequestStatus(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const id = Number(formData.get("id"));
+  const status = String(formData.get("status"));
+  if (!Number.isInteger(id) || !["new", "contacted", "booked", "closed"].includes(status)) redirect("/dashboard");
+  // RLS limits this to requests on the signed-in owner's own Channel.
+  await supabase.from("booking_requests").update({ status }).eq("id", id);
+  redirect("/dashboard#requests");
+}

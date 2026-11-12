@@ -253,3 +253,11 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .reelframe.tall { aspect-ratio: 9 / 16; max-height: 560px; }
 .reelframe iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .reellink { color: var(--color-brand2); font-size: 14px; font-weight: 700; }
+
+/* Booking request */
+.bookbox { background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 16px; padding: 22px; margin: 8px 0 32px; position: relative; scroll-margin-top: 90px; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-size: 12.5px; color: var(--color-muted); line-height: 1.5; margin: 4px 0 16px; }
+.consent input { margin-top: 3px; flex: none; }
+.consent a { color: var(--color-brand2); text-decoration: underline; }
+.reqrow { background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.reqrow .meta { color: var(--color-muted); font-size: 13px; }

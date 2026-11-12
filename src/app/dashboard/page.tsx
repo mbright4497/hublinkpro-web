@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut } from "./actions";
+import { saveChannel, signOut, setRequestStatus } from "./actions";
 import MediaField from "@/components/MediaField";
 import { SOCIALS } from "@/lib/media";
 
@@ -38,6 +38,14 @@ export default async function Dashboard({
     supabase.from("networks").select("id,name").order("display_order"),
   ]);
   const ch = channels?.[0] ?? null;
+  const { data: requests } = ch
+    ? await supabase
+        .from("booking_requests")
+        .select("id,name,phone,email,service,message,preferred_time,sms_consent,status,created_at")
+        .eq("channel_id", ch.id)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] };
   const editable = !ch || ch.status !== "pending";
 
   return (
@@ -74,6 +82,42 @@ export default async function Dashboard({
               Preview your Channel →
             </Link>
           </p>
+        )}
+
+        {ch && (
+          <section id="requests" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Booking requests</h2>
+            {!requests?.length ? (
+              <p className="lead" style={{ fontSize: 14 }}>
+                {ch.status === "live"
+                  ? "Nothing yet. Requests from your Channel page show up here."
+                  : "Once your Channel is live, requests from neighbors show up here."}
+              </p>
+            ) : (
+              requests.map((r) => (
+                <div key={r.id} className="reqrow">
+                  <strong>{r.name}</strong> · <a href={`tel:${r.phone.replace(/[^0-9+]/g, "")}`} style={{ color: "var(--color-brand2)" }}>{r.phone}</a>
+                  {r.email && <> · <a href={`mailto:${r.email}`} style={{ color: "var(--color-brand2)" }}>{r.email}</a></>}
+                  <div className="meta">
+                    {new Date(r.created_at).toLocaleString("en-US", { timeZone: "America/New_York" })}
+                    {r.service ? ` · ${r.service}` : ""}{r.preferred_time ? ` · ${r.preferred_time}` : ""}
+                    {r.sms_consent ? " · OK to text" : " · call or email only"}
+                  </div>
+                  {r.message && <p style={{ margin: "8px 0 0", whiteSpace: "pre-wrap" }}>{r.message}</p>}
+                  <form action={setRequestStatus} style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <select name="status" defaultValue={r.status} style={{ background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "6px 10px" }}>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="booked">Booked</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    <button className="btn-ghost" type="submit">Update</button>
+                  </form>
+                </div>
+              ))
+            )}
+          </section>
         )}
 
         <form action={saveChannel}>
