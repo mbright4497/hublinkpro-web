@@ -53,17 +53,18 @@ export default function Hero() {
         <div className="hero-bg a-hlp" style={{ opacity: 1 }} />
         <div className="hero-scrim" />
         <div className="hero-in">
-          <span className="hero-eyebrow">Opening in the Tri-Cities</span>
-          <h1>Local discovery for the Tri-Cities</h1>
+          <span className="hero-eyebrow">Johnson City · Kingsport · Tri-Cities</span>
+          <h1>Meet your local pros. Book them direct.</h1>
           <p className="lead">
-            Johnson City and Kingsport. Founding listings are open now. Food trucks list free.
+            Every business on HubLinkPro has its own Channel: a short intro, what they do, and a
+            button to book. Food trucks list free.
           </p>
           <div className="hero-cta">
-            <Link href="/list-your-business" className="btn-primary">
-              List your business
-            </Link>
-            <Link href="/list-your-business" className="btn-ghost">
-              List a food truck — free →
+            <a href="#how-it-works" className="btn-primary">
+              How it works
+            </a>
+            <Link href="/login" className="btn-ghost">
+              Build your Channel, free →
             </Link>
           </div>
         </div>

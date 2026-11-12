@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
 import Hero from "@/components/Hero";
+import HowItWorks from "@/components/HowItWorks";
 import {
   NETWORKS,
   rowAvailableNow,
@@ -43,8 +44,8 @@ function Nav() {
         <a href="#your-channel">Your Channel</a>
         <a href="#automations">HLP Automations</a>
       </div>
-      <Link href="/list-your-business" className="listbtn">
-        List your business
+      <Link href="/login" className="listbtn">
+        Build your Channel
       </Link>
     </nav>
   );
@@ -123,6 +124,9 @@ export default function Home() {
 
       {/* Cinematic hero — "Tonight in..." rotating billboard + live radar strip */}
       <Hero />
+
+      {/* What this is and how to use it, up front */}
+      <HowItWorks />
 
       {/* FOOD FRONT DOOR — the daily-habit surface (food is what brings everyone back) */}
       {foodPick ? (
