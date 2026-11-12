@@ -2,8 +2,9 @@ import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
-import { NETWORKS, houseChannel, type Business } from "@/lib/data";
-import { localChannels, liveHouseChannel } from "@/lib/channels";
+import { NETWORKS, type Business } from "@/lib/data";
+import { localChannels, houseStage } from "@/lib/channels";
+import HouseStage from "@/components/HouseStage";
 
 export const revalidate = 60;
 
@@ -78,39 +79,8 @@ function Row({
   );
 }
 
-// The self-advertisement: rather than pitch the platform, show a business owner the
-// finished product. The card links straight to our own fully loaded Channel.
-function ChannelShowcase({ house }: { house?: Business }) {
-  if (!house) return null;
-  return (
-    <section className="section showcase" id="your-channel">
-      <div className="showcase-copy">
-        <div className="badge">🅷 For business owners</div>
-        <h2>See what your Channel looks like</h2>
-        <p className="sub" style={{ maxWidth: 460 }}>
-          Not a listing in a directory — your own branded space. Reel, work gallery, services,
-          hours, and a direct line to the neighbors who need you. This one is ours. Open it,
-          then picture your name on it.
-        </p>
-        <div className="hero-cta" style={{ marginTop: 4 }}>
-          <Link href={house.href ?? `/business/${house.slug}`} className="btn-primary">
-            Tour a live Channel
-          </Link>
-          <Link href="/list-your-business" className="btn-ghost">
-            Claim your slot →
-          </Link>
-        </div>
-      </div>
-      <div className="track showcase-track">
-        <PosterCard b={house} />
-      </div>
-    </section>
-  );
-}
-
 export default async function Home() {
-  const [local, liveHouse] = await Promise.all([localChannels(), liveHouseChannel()]);
-  const house = liveHouse ?? houseChannel();
+  const [local, stage] = await Promise.all([localChannels(), houseStage()]);
   const food = local.filter((b) => b.networkId === "food");
   // Deterministic daily pick, same rotation as before, now over real Channels.
   const foodPick = food.length ? food[Math.floor(Date.now() / 86_400_000) % food.length] : undefined;
@@ -128,6 +98,9 @@ export default async function Home() {
 
       {/* Cinematic hero — "Tonight in..." rotating billboard + live radar strip */}
       <Hero />
+
+      {/* Our own live Channel, up top: the product demonstrated instead of described */}
+      {stage && <HouseStage stage={stage} />}
 
       {/* What this is and how to use it, up front */}
       <HowItWorks />
@@ -188,9 +161,6 @@ export default async function Home() {
           ))}
         </div>
       </section>
-
-      {/* Our own Channel — the product, demonstrated instead of described */}
-      <ChannelShowcase house={house} />
 
       {/* HLP Automations */}
       <section className="section" id="automations">
