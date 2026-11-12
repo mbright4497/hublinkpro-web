@@ -9,7 +9,7 @@ const NEIGHBORS = [
 ];
 
 const OWNERS = [
-  { n: "1", h: "Enter your email", p: "We email you a sign-in link. No password to remember." },
+  { n: "1", h: "Create your login", p: "Pick a password and you are in. Takes a minute." },
   { n: "2", h: "Build your Channel", p: "Add your name, services, a video, and your booking link." },
   { n: "3", h: "Share your link", p: "Put it on your Facebook, your invoices, your truck. Customers book you direct." },
 ];
