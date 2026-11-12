@@ -16,3 +16,14 @@ export async function setChannelStatus(formData: FormData) {
   await supabase.from("channels").update({ status }).eq("id", id);
   revalidatePath("/admin");
 }
+
+export async function markMessageRead(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const id = Number(formData.get("id"));
+  if (!id) return;
+  // RLS also restricts this update to the admin.
+  await supabase.from("contact_messages").update({ read: true }).eq("id", id);
+  revalidatePath("/admin");
+}
