@@ -1,13 +1,36 @@
 import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
-import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import { NETWORKS, type Business } from "@/lib/data";
 import { localChannels, houseStage } from "@/lib/channels";
-import HouseStage from "@/components/HouseStage";
+import Billboard from "@/components/Billboard";
 import { SITE_SOCIALS } from "@/lib/site";
 
 export const revalidate = 60;
+
+const SLOTS = [
+  { svc: "Food truck", zip: "37601 · Johnson City", icon: "🌮", note: "Lists free" },
+  { svc: "Roofing", zip: "37604 · Johnson City", icon: "🏠", note: "Founding slot open" },
+  { svc: "HVAC", zip: "37615 · Johnson City", icon: "❄️", note: "Founding slot open" },
+  { svc: "Plumbing", zip: "37601 · Johnson City", icon: "🔧", note: "Founding slot open" },
+  { svc: "Landscaping", zip: "37660 · Kingsport", icon: "🌿", note: "Founding slot open" },
+  { svc: "Paving", zip: "37663 · Kingsport", icon: "🛣️", note: "Founding slot open" },
+  { svc: "Electrical", zip: "37664 · Kingsport", icon: "⚡", note: "Founding slot open" },
+  { svc: "Pressure washing", zip: "37604 · Johnson City", icon: "💦", note: "Founding slot open" },
+];
+
+function PosterRow({ title, icon, id, children }: { title: string; icon: string; id?: string; children: React.ReactNode }) {
+  return (
+    <section className="row" id={id}>
+      <div className="rowhead">
+        <h2>
+          <span>{icon}</span> {title}
+        </h2>
+      </div>
+      <div className="track">{children}</div>
+    </section>
+  );
+}
 
 const LIVE_ZIPS = [
   "37601 · Johnson City",
@@ -27,7 +50,7 @@ const AUTOMATIONS = [
 
 function Nav() {
   return (
-    <nav className="nav">
+    <nav className="nav over">
       <div className="brand">
         <span className="logo">H</span>
         <span>HubLink<span className="pro">Pro</span></span>
@@ -37,7 +60,7 @@ function Nav() {
         <a href="#networks">Networks</a>
         <a href="#food-trucks">Food Trucks</a>
         <Link href="/contact">Contact</Link>
-        <a href="#your-channel">Your Channel</a>
+        <Link href="/channel/hublinkpro">Your Channel</Link>
         <a href="#automations">HLP Automations</a>
       </div>
       <Link href="/login?mode=signin" className="signin">
@@ -96,73 +119,62 @@ export default async function Home() {
     <>
       <Nav />
 
-      <div id="discover" />
+      {/* Full-bleed cinematic opener: our own Channel video behind the headline */}
+      <Billboard stage={stage} />
 
-      {/* Cinematic hero — "Tonight in..." rotating billboard + live radar strip */}
-      <Hero />
-
-      {/* Our own live Channel, up top: the product demonstrated instead of described */}
-      {stage && <HouseStage stage={stage} />}
-
-      {/* What this is and how to use it, up front */}
-      <HowItWorks />
-
-      {/* FOOD FRONT DOOR — the daily-habit surface (food is what brings everyone back) */}
-      {foodPick ? (
-      <section className="row" id="eat" style={{ marginTop: 18 }}>
-          <div className="rowhead">
-            <h2>
-              <span>🍽️</span> Eat Local Tonight · Johnson City
-            </h2>
-            <a className="see" href="#food-trucks">
-              Food Trucks ›
-            </a>
-          </div>
-          <p className="sub" style={{ padding: "0 5vw", margin: "-6px 0 14px" }}>
-            Today&apos;s favorite:{" "}
-            <b style={{ color: "var(--color-light)" }}>{foodPick.name}</b> — {foodPick.tagline}
-          </p>
-          <div className="track">
-            {foodChannels.map((b) => (
-              <PosterCard key={b.id} b={b} />
-            ))}
-          </div>
-        </section>
-      ) : (
-        <section className="section" id="eat" style={{ marginTop: 18 }}>
-          <h2>🍽️ Food trucks: list free</h2>
-          <p className="sub">
-            We&apos;re signing up the first food trucks in Johnson City and Kingsport. Post where
-            you&apos;re parked today and let neighbors find you.
-          </p>
-          <Link href="/list-your-business" className="btn-primary">
-            List a food truck — free
+      {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
+      <PosterRow title="Browse by genre" icon="🎬" id="networks">
+        {NETWORKS.map((n) => (
+          <Link key={n.id} href={`/network/${n.slug}`} className="poster npost" style={{ background: n.hue }} aria-label={n.name}>
+            <span className="nicon" aria-hidden="true">{n.icon}</span>
+            <span className="pshade" />
+            <span className="pbody">
+              <span className="pname">{n.name}</span>
+              <span className="pcat">{n.count} services</span>
+            </span>
+            <span className="reveal">
+              <span className="pname">{n.name}</span>
+              <span className="qbtns">
+                <span className="q1">Browse →</span>
+              </span>
+            </span>
           </Link>
-        </section>
-      )}
+        ))}
+      </PosterRow>
 
-      {/* Rows read live, approved Channels. An empty row hides itself. */}
+      {/* Real Channels. Each row hides itself until it has one. */}
       <Row title="Just Listed on HubLinkPro" icon="🆕" items={justListed} />
+      {foodPick && <Row title="Eat Local Tonight" icon="🍽️" items={foodChannels} />}
       <Row title="Food Trucks Live Today" icon="🌮" items={trucks} />
       <div id="food-trucks" />
       {networkRows.map(({ n, items }) => (
         <Row key={n.id} title={n.name} icon={n.icon} items={items} />
       ))}
 
-      {/* Browse every Network */}
-      <section className="section" id="networks">
-        <h2>Browse every Network</h2>
-        <p className="sub">Max 3 pros per service, per neighborhood. Curated, never crowded.</p>
-        <div className="sectorgrid">
-          {NETWORKS.map((s) => (
-            <Link key={s.id} href={`/network/${s.slug}`} className="sector" style={{ background: s.hue }}>
-              <span style={{ fontSize: 22 }}>{s.icon}</span>
-              {s.name}
-              <small>{s.count} services</small>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Open founding slots: scarcity is the product (max 3 pros per service, per ZIP) */}
+      <PosterRow title="Claim your neighborhood" icon="📍">
+        {SLOTS.map((x) => (
+          <Link key={x.svc + x.zip} href="/login" className="poster slot" aria-label={`Claim ${x.svc} in ${x.zip}`}>
+            <span className="slotpill">{x.note}</span>
+            <span className="nicon" aria-hidden="true">{x.icon}</span>
+            <span className="pshade" />
+            <span className="pbody">
+              <span className="pname">{x.svc}</span>
+              <span className="pcat">{x.zip}</span>
+            </span>
+            <span className="reveal">
+              <span className="pname">{x.svc}</span>
+              <span className="tag">Max 3 pros per service, per ZIP. Be one of them.</span>
+              <span className="qbtns">
+                <span className="q1">Claim it →</span>
+              </span>
+            </span>
+          </Link>
+        ))}
+      </PosterRow>
+
+      {/* What this is, kept short and below the posters */}
+      <HowItWorks />
 
       {/* HLP Automations */}
       <section className="section" id="automations">
