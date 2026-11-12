@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut } from "./actions";
+import { saveChannel, signOut, setRequestStatus } from "./actions";
+import MediaField from "@/components/MediaField";
+import { SOCIALS } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Channel | HubLinkPro" };
@@ -9,6 +11,8 @@ export const metadata = { title: "Your Channel | HubLinkPro" };
 const ERRORS: Record<string, string> = {
   name: "Add your business name.",
   url: "One of your links doesn't look like a web address.",
+  social: "One of your social links isn't a web address for that site (for example, the Facebook box needs a facebook.com link).",
+  reel: "One of your reels isn't a link from TikTok, Instagram, Facebook, YouTube, or Vimeo.",
   save: "We couldn't save that. Try again.",
   notfound: "We couldn't find that Channel.",
 };
@@ -34,6 +38,14 @@ export default async function Dashboard({
     supabase.from("networks").select("id,name").order("display_order"),
   ]);
   const ch = channels?.[0] ?? null;
+  const { data: requests } = ch
+    ? await supabase
+        .from("booking_requests")
+        .select("id,name,phone,email,service,message,preferred_time,sms_consent,status,created_at")
+        .eq("channel_id", ch.id)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : { data: [] };
   const editable = !ch || ch.status !== "pending";
 
   return (
@@ -72,9 +84,50 @@ export default async function Dashboard({
           </p>
         )}
 
+        {ch && (
+          <section id="requests" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Booking requests</h2>
+            {!requests?.length ? (
+              <p className="lead" style={{ fontSize: 14 }}>
+                {ch.status === "live"
+                  ? "Nothing yet. Requests from your Channel page show up here."
+                  : "Once your Channel is live, requests from neighbors show up here."}
+              </p>
+            ) : (
+              requests.map((r) => (
+                <div key={r.id} className="reqrow">
+                  <strong>{r.name}</strong> · <a href={`tel:${r.phone.replace(/[^0-9+]/g, "")}`} style={{ color: "var(--color-brand2)" }}>{r.phone}</a>
+                  {r.email && <> · <a href={`mailto:${r.email}`} style={{ color: "var(--color-brand2)" }}>{r.email}</a></>}
+                  <div className="meta">
+                    {new Date(r.created_at).toLocaleString("en-US", { timeZone: "America/New_York" })}
+                    {r.service ? ` · ${r.service}` : ""}{r.preferred_time ? ` · ${r.preferred_time}` : ""}
+                    {r.sms_consent ? " · OK to text" : " · call or email only"}
+                  </div>
+                  {r.message && <p style={{ margin: "8px 0 0", whiteSpace: "pre-wrap" }}>{r.message}</p>}
+                  <form action={setRequestStatus} style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
+                    <input type="hidden" name="id" value={r.id} />
+                    <select name="status" defaultValue={r.status} style={{ background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "6px 10px" }}>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="booked">Booked</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                    <button className="btn-ghost" type="submit">Update</button>
+                  </form>
+                </div>
+              ))
+            )}
+          </section>
+        )}
+
         <form action={saveChannel}>
           {ch && <input type="hidden" name="id" value={ch.id} />}
           <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0 }}>
+            <h2 className="dsec">Your look</h2>
+            <MediaField name="logo_url" kind="logo" userId={user.id} initial={ch?.logo_url} label="Logo" help="A square photo works best." />
+            <MediaField name="hero_image_url" kind="hero" userId={user.id} initial={ch?.hero_image_url} label="Cover photo" help="A wide photo of your best work or your crew." />
+
+            <h2 className="dsec">The basics</h2>
             <div className="field">
               <label>Business name</label>
               <input name="name" required maxLength={100} defaultValue={ch?.name ?? ""} placeholder="Your business name" />
@@ -100,10 +153,35 @@ export default async function Dashboard({
               <label>About your business</label>
               <textarea name="description" rows={5} maxLength={2000} defaultValue={ch?.description ?? ""} />
             </div>
+            <h2 className="dsec">Your commercial</h2>
+            <MediaField
+              name="video_file_url"
+              kind="video"
+              userId={user.id}
+              initial={ch?.video_file_url}
+              label="Record or upload a short video"
+              help="30–60 seconds is perfect. Tell neighbors who you are and what you do. Up to 50 MB."
+            />
             <div className="field">
-              <label>Commercial video link (YouTube or Vimeo)</label>
+              <label>Or paste a YouTube or Vimeo link</label>
               <input name="video_url" defaultValue={ch?.video_url ?? ""} placeholder="https://" />
             </div>
+
+            <h2 className="dsec">Reels</h2>
+            <div className="field">
+              <label>Reels and videos from TikTok, Instagram, Facebook, or YouTube (one link per line, up to 6)</label>
+              <textarea name="reels" rows={4} defaultValue={ch?.reels?.join("\n") ?? ""} placeholder="https://www.tiktok.com/@you/video/123..." />
+            </div>
+
+            <h2 className="dsec">Find you everywhere</h2>
+            {SOCIALS.map((sc) => (
+              <div className="field" key={sc.key}>
+                <label>{sc.label}</label>
+                <input name={`social_${sc.key}`} defaultValue={(ch?.social_links as Record<string, string> | undefined)?.[sc.key] ?? ""} placeholder="https://" />
+              </div>
+            ))}
+
+            <h2 className="dsec">Booking and contact</h2>
             <div className="field">
               <label>Booking link (your calendar: Google, Calendly, GoHighLevel, etc.)</label>
               <input name="booking_url" defaultValue={ch?.booking_url ?? ""} placeholder="https://" />
