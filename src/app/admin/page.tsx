@@ -22,7 +22,7 @@ export default async function Admin() {
   return (
     <>
       <nav className="nav">
-        <Link href="/" className="brand"><span className="logo">H</span>HubLink<span className="pro">Pro</span></Link>
+        <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
         <span style={{ color: "var(--color-muted)" }}>Admin · {sorted.length} Channels</span>
         <span />
       </nav>

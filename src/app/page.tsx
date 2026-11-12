@@ -35,7 +35,7 @@ function Nav() {
     <nav className="nav">
       <div className="brand">
         <span className="logo">H</span>
-        HubLink<span className="pro">Pro</span>
+        <span>HubLink<span className="pro">Pro</span></span>
       </div>
       <div className="navlinks">
         <a href="#discover">Discover</a>

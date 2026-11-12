@@ -64,7 +64,7 @@ export default async function ChannelPage({
   return (
     <>
       <nav className="nav">
-        <Link href="/" className="brand"><span className="logo">H</span>HubLink<span className="pro">Pro</span></Link>
+        <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
         <Link href="/" className="navlinks" style={{ color: "var(--color-mist)" }}>← Back to discover</Link>
         <Link href="/dashboard" className="listbtn">Build your Channel</Link>
       </nav>

@@ -53,7 +53,7 @@ export default async function Dashboard({
       <nav className="nav">
         <Link href="/" className="brand">
           <span className="logo">H</span>
-          HubLink<span className="pro">Pro</span>
+          <span>HubLink<span className="pro">Pro</span></span>
         </Link>
         <span className="navemail">{user.email}</span>
         <form action={signOut}>
