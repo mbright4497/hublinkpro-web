@@ -5,6 +5,7 @@ import HowItWorks from "@/components/HowItWorks";
 import { NETWORKS, type Business } from "@/lib/data";
 import { localChannels, houseStage } from "@/lib/channels";
 import HouseStage from "@/components/HouseStage";
+import { SITE_SOCIALS } from "@/lib/site";
 
 export const revalidate = 60;
 
@@ -35,6 +36,7 @@ function Nav() {
         <a href="#discover">Discover</a>
         <a href="#networks">Networks</a>
         <a href="#food-trucks">Food Trucks</a>
+        <Link href="/contact">Contact</Link>
         <a href="#your-channel">Your Channel</a>
         <a href="#automations">HLP Automations</a>
       </div>
@@ -230,7 +232,18 @@ export default async function Home() {
           <Link href="/list-your-business">List a food truck — free</Link>
           <Link href="/channel/hublinkpro">See a live Channel</Link>
           <a href="#automations">HLP Automations</a>
+          <Link href="/contact">Message us</Link>
         </div>
+        {SITE_SOCIALS.length > 0 && (
+          <div className="col">
+            <h4>Follow us</h4>
+            {SITE_SOCIALS.map((x) => (
+              <a key={x.label} href={x.url} target="_blank" rel="noopener noreferrer">
+                {x.label}
+              </a>
+            ))}
+          </div>
+        )}
         <div className="col">
           <h4>Legal</h4>
           <Link href="/terms">Terms of Service</Link>
