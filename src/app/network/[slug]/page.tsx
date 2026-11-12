@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import PosterCard from "@/components/PosterCard";
-import { getNetworkBySlug, rowByNetwork, categoriesInNetwork, NETWORKS } from "@/lib/data";
+import { getNetworkBySlug, NETWORKS } from "@/lib/data";
+import { localChannels } from "@/lib/channels";
+
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return NETWORKS.map((n) => ({ slug: n.slug }));
@@ -31,8 +34,8 @@ export default async function NetworkPage({
   const network = getNetworkBySlug(slug);
   if (!network) notFound();
 
-  const channels = rowByNetwork(network.id);
-  const categories = categoriesInNetwork(network.id);
+  const channels = (await localChannels()).filter((b) => b.networkId === network.id);
+  const categories = Array.from(new Set(channels.map((c) => c.category))).sort();
 
   return (
     <>

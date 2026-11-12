@@ -58,6 +58,10 @@ export type Business = {
   emergency: boolean;
   openNow: boolean;
   foodTruck: boolean;
+  // Set for Channels that come from the database. Static entries leave these unset.
+  href?: string; // where the poster links (defaults to /business/<slug>)
+  imgUrl?: string; // real hero image
+  logoUrl?: string; // real logo
 };
 
 export const NETWORKS: Network[] = [
