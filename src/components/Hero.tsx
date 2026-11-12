@@ -68,7 +68,7 @@ export default function Hero() {
             </a>
           </div>
           <p className="hero-signin">
-            Already have a Channel? <Link href="/login">Sign in</Link>
+            Already have a Channel? <Link href="/login?mode=signin">Sign in</Link>
           </p>
         </div>
       </section>
