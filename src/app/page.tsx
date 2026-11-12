@@ -44,6 +44,9 @@ function Nav() {
         <a href="#your-channel">Your Channel</a>
         <a href="#automations">HLP Automations</a>
       </div>
+      <Link href="/login" className="signin">
+        Sign in
+      </Link>
       <Link href="/login" className="listbtn">
         Build your Channel
       </Link>
