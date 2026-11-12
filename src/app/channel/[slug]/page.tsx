@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
+import { SOCIALS, reel } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${c.name} | HubLinkPro`,
     description: c.tagline ?? undefined,
+    openGraph: {
+      title: c.name,
+      description: c.tagline ?? undefined,
+      images: c.hero_image_url ?? c.logo_url ? [c.hero_image_url ?? c.logo_url] : undefined,
+    },
     robots: c.status === "live" ? undefined : { index: false },
   };
 }
@@ -44,6 +50,8 @@ export default async function ChannelPage({ params }: { params: Promise<{ slug: 
   if (!c) notFound();
   const net = Array.isArray(c.networks) ? c.networks[0] : c.networks;
   const embed = embedUrl(c.video_url);
+  const socials = SOCIALS.filter((sc) => (c.social_links as Record<string, string>)?.[sc.key]);
+  const reels = ((c.reels as string[] | null) ?? []).map(reel);
 
   return (
     <>
@@ -55,6 +63,14 @@ export default async function ChannelPage({ params }: { params: Promise<{ slug: 
       <div className="page" style={{ maxWidth: 860 }}>
         {c.status !== "live" && (
           <p className="note">Preview — this Channel isn&apos;t public yet ({c.status}).</p>
+        )}
+        {c.hero_image_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={c.hero_image_url} alt="" className="chbanner" />
+        )}
+        {c.logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={c.logo_url} alt={`${c.name} logo`} className={`chlogo ${c.hero_image_url ? "over" : ""}`} />
         )}
         <div className="badge">{net?.name ?? "Local business"}{c.city ? ` · ${c.city}` : ""}</div>
         <h1>{c.name}</h1>
@@ -72,7 +88,26 @@ export default async function ChannelPage({ params }: { params: Promise<{ slug: 
           )}
         </div>
 
-        {embed ? (
+        {socials.length > 0 && (
+          <div className="socialrow">
+            {socials.map((sc) => (
+              <a key={sc.key} href={(c.social_links as Record<string, string>)[sc.key]} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                {sc.label}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {c.video_file_url ? (
+          <video
+            src={c.video_file_url}
+            controls
+            playsInline
+            preload="metadata"
+            poster={c.hero_image_url ?? undefined}
+            className="chvideo"
+          />
+        ) : embed ? (
           <div style={{ position: "relative", paddingTop: "56.25%", marginBottom: 28, borderRadius: 16, overflow: "hidden", border: "1px solid var(--color-line)" }}>
             <iframe
               src={embed}
@@ -86,6 +121,32 @@ export default async function ChannelPage({ params }: { params: Promise<{ slug: 
         ) : c.video_url ? (
           <p><a href={c.video_url} target="_blank" rel="noopener noreferrer" className="btn-ghost">▶ Watch our commercial</a></p>
         ) : null}
+
+        {reels.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 20, marginTop: 8 }}>Reels</h2>
+            <div className="reels">
+              {reels.map((r, i) => (
+                <div key={`${r.href}-${i}`} className="reelcard">
+                  {r.embed ? (
+                    <div className={`reelframe ${r.tall ? "tall" : ""}`}>
+                      <iframe
+                        src={r.embed}
+                        title={`${c.name} ${r.platform}`}
+                        loading="lazy"
+                        allow="encrypted-media; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : null}
+                  <a href={r.href} target="_blank" rel="noopener noreferrer" className="reellink">
+                    Watch on {r.platform} →
+                  </a>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {c.description && <p style={{ color: "var(--color-mist)", lineHeight: 1.65, whiteSpace: "pre-wrap" }}>{c.description}</p>}
 
