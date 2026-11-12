@@ -275,3 +275,9 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .consent a { color: var(--color-brand2); text-decoration: underline; }
 .reqrow { background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
 .reqrow .meta { color: var(--color-muted); font-size: 13px; }
+
+/* Empty-state hero on phones: size to the content instead of a tall blank card */
+@media (max-width: 820px) {
+  .hero.hero-empty { height: auto; min-height: 0; max-height: none; }
+  .hero.hero-empty .hero-in { position: relative; left: auto; right: auto; bottom: auto; padding: 44px 6% 34px; }
+}

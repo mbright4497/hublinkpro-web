@@ -49,7 +49,7 @@ export default function Hero() {
   const b = FEATURED[i] ?? FEATURED[0];
   if (!b) {
     return (
-      <section className="hero">
+      <section className="hero hero-empty">
         <div className="hero-bg a-hlp" style={{ opacity: 1 }} />
         <div className="hero-scrim" />
         <div className="hero-in">
@@ -60,12 +60,12 @@ export default function Hero() {
             button to book. Food trucks list free.
           </p>
           <div className="hero-cta">
-            <a href="#how-it-works" className="btn-primary">
-              How it works
-            </a>
-            <Link href="/login" className="btn-ghost">
+            <Link href="/login" className="btn-primary">
               Build your Channel, free →
             </Link>
+            <a href="#how-it-works" className="btn-ghost">
+              How it works
+            </a>
           </div>
         </div>
       </section>
