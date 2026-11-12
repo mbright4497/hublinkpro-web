@@ -17,7 +17,7 @@ export default function LegalLayout({
       <nav className="nav">
         <Link href="/" className="brand">
           <span className="logo">H</span>
-          HubLink<span className="pro">Pro</span>
+          <span>HubLink<span className="pro">Pro</span></span>
         </Link>
         <span className="navlinks">
           <Link href="/">← Back to HubLinkPro</Link>

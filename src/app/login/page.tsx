@@ -50,7 +50,7 @@ export default function Login() {
       <nav className="nav">
         <Link href="/" className="brand">
           <span className="logo">H</span>
-          HubLink<span className="pro">Pro</span>
+          <span>HubLink<span className="pro">Pro</span></span>
         </Link>
         <span />
         <span />

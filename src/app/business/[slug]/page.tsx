@@ -46,7 +46,7 @@ export default async function BusinessPage({
       <nav className="nav">
         <Link href="/" className="brand">
           <span className="logo">H</span>
-          HubLink<span className="pro">Pro</span>
+          <span>HubLink<span className="pro">Pro</span></span>
         </Link>
         <Link href="/" className="navlinks" style={{ color: "var(--color-mist)" }}>
           ← Back to discover
