@@ -55,9 +55,9 @@ export default async function Dashboard({
           <span className="logo">H</span>
           HubLink<span className="pro">Pro</span>
         </Link>
-        <span style={{ color: "var(--color-muted)", fontSize: 14 }}>{user.email}</span>
+        <span className="navemail">{user.email}</span>
         <form action={signOut}>
-          <button className="btn-ghost" type="submit">Sign out</button>
+          <button className="btn-ghost signout" type="submit">Sign out</button>
         </form>
       </nav>
       <div className="page">
