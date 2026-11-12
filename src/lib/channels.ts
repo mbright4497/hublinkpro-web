@@ -5,6 +5,7 @@
 // poster hides them.
 import { SUPABASE_URL, SUPABASE_KEY } from "@/lib/supabase/env";
 import { NETWORKS, type Business, type Tier } from "@/lib/data";
+import { youtubeVideoEmbed } from "@/lib/youtube";
 
 type Row = {
   id: number;
@@ -72,4 +73,39 @@ export async function localChannels(): Promise<Business[]> {
 
 export async function liveHouseChannel(): Promise<Business | undefined> {
   return (await liveChannels()).find((b) => b.house);
+}
+
+// What the homepage "live Channel" stage needs from the house Channel.
+export type HouseStage = {
+  slug: string;
+  name: string;
+  tagline: string;
+  videoFile: string | null;
+  videoEmbed: string | null;
+  poster: string | null;
+};
+
+export async function houseStage(): Promise<HouseStage | null> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/channels?status=eq.live&slug=eq.${HOUSE_SLUG}&select=slug,name,tagline,video_file_url,video_url,hero_image_url&limit=1`,
+      { headers: { apikey: SUPABASE_KEY }, next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) },
+    );
+    if (!res.ok) return null;
+    const [c] = (await res.json()) as {
+      slug: string; name: string; tagline: string | null;
+      video_file_url: string | null; video_url: string | null; hero_image_url: string | null;
+    }[];
+    if (!c) return null;
+    return {
+      slug: c.slug,
+      name: c.name,
+      tagline: c.tagline ?? "",
+      videoFile: c.video_file_url,
+      videoEmbed: c.video_file_url ? null : (youtubeVideoEmbed(c.video_url)?.embed ?? null),
+      poster: c.hero_image_url,
+    };
+  } catch {
+    return null;
+  }
 }
