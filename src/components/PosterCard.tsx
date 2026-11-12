@@ -17,10 +17,20 @@ export default function PosterCard({
 }) {
   const jobs = b.jobs > 0 ? `· ${b.jobs} jobs` : "";
   return (
-    <Link href={`/business/${b.slug}`} className="poster" aria-label={b.name}>
-      <span className={`pimg ${b.art}`} />
+    <Link href={b.href ?? `/business/${b.slug}`} className="poster" aria-label={b.name}>
+      <span
+        className={`pimg ${b.art}`}
+        style={b.imgUrl ? { backgroundImage: `url(${b.imgUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+      />
       <span className="pshade" />
-      <span className="plogo">{b.logo}</span>
+      <span className="plogo">
+        {b.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={b.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }} />
+        ) : (
+          b.logo
+        )}
+      </span>
       {b.verified && <span className="pv">✓ Verified</span>}
       <span className="pbody">
         <span className="pname">{b.name}</span>

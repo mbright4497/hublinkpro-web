@@ -60,7 +60,7 @@ export default function HowItWorks() {
             <Link href="/login" className="btn-primary">
               Build your Channel, free
             </Link>
-            <Link href="/business/hublinkpro" className="btn-ghost">
+            <Link href="/channel/hublinkpro" className="btn-ghost">
               See an example
             </Link>
           </div>

@@ -2,17 +2,10 @@ import Link from "next/link";
 import PosterCard from "@/components/PosterCard";
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
-import {
-  NETWORKS,
-  rowAvailableNow,
-  rowEmergency,
-  rowTopRated,
-  rowFoodTrucks,
-  rowByNetwork,
-  rowFood,
-  foodPickOfDay,
-  houseChannel,
-} from "@/lib/data";
+import { NETWORKS, houseChannel, type Business } from "@/lib/data";
+import { localChannels, liveHouseChannel } from "@/lib/channels";
+
+export const revalidate = 60;
 
 const LIVE_ZIPS = [
   "37601 · Johnson City",
@@ -62,7 +55,7 @@ function Row({
 }: {
   title: string;
   icon: string;
-  items: ReturnType<typeof rowAvailableNow>;
+  items: Business[];
   emergency?: boolean;
 }) {
   if (items.length === 0) return null;
@@ -87,8 +80,7 @@ function Row({
 
 // The self-advertisement: rather than pitch the platform, show a business owner the
 // finished product. The card links straight to our own fully loaded Channel.
-function ChannelShowcase() {
-  const house = houseChannel();
+function ChannelShowcase({ house }: { house?: Business }) {
   if (!house) return null;
   return (
     <section className="section showcase" id="your-channel">
@@ -101,7 +93,7 @@ function ChannelShowcase() {
           then picture your name on it.
         </p>
         <div className="hero-cta" style={{ marginTop: 4 }}>
-          <Link href={`/business/${house.slug}`} className="btn-primary">
+          <Link href={house.href ?? `/business/${house.slug}`} className="btn-primary">
             Tour a live Channel
           </Link>
           <Link href="/list-your-business" className="btn-ghost">
@@ -116,9 +108,18 @@ function ChannelShowcase() {
   );
 }
 
-export default function Home() {
-  const foodPick = foodPickOfDay();
-  const foodChannels = foodPick ? [foodPick, ...rowFood().filter((b) => b.id !== foodPick.id)] : [];
+export default async function Home() {
+  const [local, liveHouse] = await Promise.all([localChannels(), liveHouseChannel()]);
+  const house = liveHouse ?? houseChannel();
+  const food = local.filter((b) => b.networkId === "food");
+  // Deterministic daily pick, same rotation as before, now over real Channels.
+  const foodPick = food.length ? food[Math.floor(Date.now() / 86_400_000) % food.length] : undefined;
+  const foodChannels = foodPick ? [foodPick, ...food.filter((b) => b.id !== foodPick.id)] : [];
+  const trucks = local.filter((b) => b.foodTruck);
+  const justListed = local.slice(0, 10);
+  const networkRows = NETWORKS.filter((n) => n.id !== "food")
+    .map((n) => ({ n, items: local.filter((b) => b.networkId === n.id) }))
+    .filter((r) => r.items.length > 0);
   return (
     <>
       <Nav />
@@ -165,13 +166,13 @@ export default function Home() {
         </section>
       )}
 
-      {/* Grid-first rows */}
-      <Row title="Available Right Now" icon="🟢" items={rowAvailableNow()} />
-      <Row title="Emergency Service — One Tap" icon="🚨" items={rowEmergency()} emergency />
-      <Row title="Top Rated Near You" icon="⭐" items={rowTopRated()} />
-      <Row title="Food Trucks Live Today" icon="🌮" items={rowFoodTrucks()} />
+      {/* Rows read live, approved Channels. An empty row hides itself. */}
+      <Row title="Just Listed on HubLinkPro" icon="🆕" items={justListed} />
+      <Row title="Food Trucks Live Today" icon="🌮" items={trucks} />
       <div id="food-trucks" />
-      <Row title="Home Services in 37604" icon="🏠" items={rowByNetwork("home")} />
+      {networkRows.map(({ n, items }) => (
+        <Row key={n.id} title={n.name} icon={n.icon} items={items} />
+      ))}
 
       {/* Browse every Network */}
       <section className="section" id="networks">
@@ -189,7 +190,7 @@ export default function Home() {
       </section>
 
       {/* Our own Channel — the product, demonstrated instead of described */}
-      <ChannelShowcase />
+      <ChannelShowcase house={house} />
 
       {/* HLP Automations */}
       <section className="section" id="automations">
@@ -257,7 +258,7 @@ export default function Home() {
           <h4>Businesses</h4>
           <Link href="/list-your-business">Claim your neighborhood slot</Link>
           <Link href="/list-your-business">List a food truck — free</Link>
-          <Link href="/business/hublinkpro">See a live Channel</Link>
+          <Link href="/channel/hublinkpro">See a live Channel</Link>
           <a href="#automations">HLP Automations</a>
         </div>
         <div className="col">
