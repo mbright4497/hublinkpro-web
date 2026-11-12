@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
+import { SUPABASE_URL } from "@/lib/supabase/env";
+import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -15,6 +17,12 @@ function cleanUrl(v: FormDataEntryValue | null): string | null | "invalid" {
   } catch {
     return "invalid";
   }
+}
+
+// Only addresses inside this owner's own storage folder are accepted for uploaded media.
+function mediaUrl(v: FormDataEntryValue | null, userId: string): string | null {
+  const s = String(v ?? "").trim();
+  return s.startsWith(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${userId}/`) ? s : null;
 }
 
 const list = (v: FormDataEntryValue | null) =>
@@ -38,8 +46,29 @@ export async function saveChannel(formData: FormData) {
   const video_url = cleanUrl(formData.get("video_url"));
   if ([website, booking_url, video_url].includes("invalid")) redirect("/dashboard?error=url");
 
+  // Social links: web addresses, each on the right platform.
+  const social_links: Record<string, string> = {};
+  for (const sc of SOCIALS) {
+    const u = cleanUrl(formData.get(`social_${sc.key}`));
+    if (u === "invalid" || (u && !hostMatches(u, sc.hosts))) redirect("/dashboard?error=social");
+    if (u) social_links[sc.key] = u;
+  }
+
+  // Reels: one address per line, from the supported platforms, max 6.
+  const reels: string[] = [];
+  for (const line of String(formData.get("reels") ?? "").split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 6)) {
+    const u = cleanUrl(line);
+    if (u === "invalid" || !u || !isReelUrl(u)) redirect("/dashboard?error=reel");
+    reels.push(u);
+  }
+
   const consent = formData.get("sms_consent") === "on";
   const fields = {
+    logo_url: mediaUrl(formData.get("logo_url"), user.id),
+    hero_image_url: mediaUrl(formData.get("hero_image_url"), user.id),
+    video_file_url: mediaUrl(formData.get("video_file_url"), user.id),
+    social_links,
+    reels,
     name,
     network_id: Number(formData.get("network_id")) || null,
     services: list(formData.get("services")),
