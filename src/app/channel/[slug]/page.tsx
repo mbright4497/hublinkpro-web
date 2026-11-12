@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SOCIALS, reel } from "@/lib/media";
+import { youtubeVideoEmbed, youtubeChannelEmbed } from "@/lib/youtube";
 import { requestBooking } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,13 @@ export default async function ChannelPage({
   const c = await load((await params).slug);
   if (!c) notFound();
   const net = Array.isArray(c.networks) ? c.networks[0] : c.networks;
-  const embed = embedUrl(c.video_url);
+  const embed = youtubeVideoEmbed(c.video_url)?.embed ?? embedUrl(c.video_url);
+  // No commercial yet? Pull from their YouTube link automatically: a video plays, a channel shows its latest uploads.
+  const ytLink = (c.social_links as Record<string, string> | null)?.youtube ?? null;
+  const ytAuto =
+    !c.video_file_url && !embed && ytLink
+      ? (youtubeVideoEmbed(ytLink)?.embed ?? (await youtubeChannelEmbed(ytLink)))
+      : null;
   const socials = SOCIALS.filter((sc) => (c.social_links as Record<string, string>)?.[sc.key]);
   const reels = ((c.reels as string[] | null) ?? []).map(reel);
 
@@ -132,6 +139,19 @@ export default async function ChannelPage({
         ) : c.video_url ? (
           <p><a href={c.video_url} target="_blank" rel="noopener noreferrer" className="btn-ghost">▶ Watch our commercial</a></p>
         ) : null}
+
+        {ytAuto && (
+          <div style={{ position: "relative", paddingTop: "56.25%", marginBottom: 28, borderRadius: 16, overflow: "hidden", border: "1px solid var(--color-line)" }}>
+            <iframe
+              src={ytAuto}
+              title={`${c.name} on YouTube`}
+              allow="encrypted-media; picture-in-picture"
+              allowFullScreen
+              loading="lazy"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
+            />
+          </div>
+        )}
 
         {reels.length > 0 && (
           <>
