@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { BUCKET } from "@/lib/media";
 
-type Kind = "logo" | "hero" | "video";
+type Kind = "logo" | "hero" | "video" | "work" | "before";
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
   "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",

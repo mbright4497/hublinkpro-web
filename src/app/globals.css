@@ -354,3 +354,35 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
   .page { padding-bottom: 96px; }
 }
 .sharebox > div { flex: 1 1 300px; min-width: 0; }
+
+/* Portfolio gallery */
+.workrow { margin: 8px 0 28px; }
+.workscroll { display: flex; gap: 12px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.workcard { position: relative; flex: 0 0 clamp(150px, 38vw, 200px); aspect-ratio: 2 / 3; border-radius: 14px; overflow: hidden; border: 1px solid var(--color-line); background: var(--color-card); padding: 0; cursor: pointer; scroll-snap-align: start; transition: transform .2s ease; color: #fff; text-align: left; }
+.workcard:hover, .workcard:focus-visible { transform: scale(1.03); }
+.workcard img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.workcard::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(6,16,33,.9), transparent 55%); pointer-events: none; }
+.worktitle { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 1; font-weight: 600; font-size: 14px; line-height: 1.25; }
+.workbadge { position: absolute; top: 10px; left: 10px; z-index: 1; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(6,16,33,.8); border: 1px solid var(--color-line); }
+.lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(3,8,18,.92); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.lbbody { position: relative; width: min(900px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 12px; }
+.lbimg, .ba { width: 100%; max-height: 72vh; border-radius: 14px; object-fit: contain; background: #000; }
+.lbclose { position: absolute; top: -4px; right: -4px; z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--color-line); background: var(--color-ink2); color: #fff; font-size: 16px; cursor: pointer; transform: translate(0, -100%); }
+.lbcap { color: #fff; } .lbcap p { margin: 4px 0 0; color: var(--color-mist); }
+.lbnav { display: flex; align-items: center; justify-content: center; gap: 16px; color: var(--color-mist); }
+.lbnav button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--color-line); background: var(--color-ink2); color: #fff; font-size: 22px; cursor: pointer; }
+.ba { position: relative; overflow: hidden; touch-action: pan-y; user-select: none; cursor: ew-resize; aspect-ratio: 4 / 3; }
+.ba img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ba-before { position: absolute; inset: 0; }
+.ba-tag { position: absolute; top: 10px; z-index: 2; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: rgba(6,16,33,.8); color: #fff; }
+.ba-tag.l { left: 10px; } .ba-tag.r { right: 10px; }
+.ba-handle { position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -1.5px; background: #fff; z-index: 3; }
+.ba-handle span { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; background: #fff; color: #061021; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.ba-range { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; opacity: 0; height: 36px; z-index: 4; cursor: ew-resize; }
+/* Dashboard "Your work" */
+.workgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 12px 0 18px; }
+.workitem { border: 1px solid var(--color-line); border-radius: 12px; overflow: hidden; background: var(--color-card); }
+.workitem img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.workmeta { padding: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; font-size: 14px; }
+.workadd { border: 1px solid var(--color-line); border-radius: 14px; padding: 18px; background: var(--color-ink2); }
+.uplprev.work img, .uplprev.before img { aspect-ratio: 4 / 3; object-fit: cover; max-height: 220px; }

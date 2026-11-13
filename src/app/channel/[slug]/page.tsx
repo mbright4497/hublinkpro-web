@@ -5,6 +5,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SOCIALS, reel } from "@/lib/media";
 import { youtubeVideoEmbed, youtubeChannelEmbed } from "@/lib/youtube";
 import ShareChannel from "@/components/ShareChannel";
+import WorkGallery, { type WorkItem } from "@/components/WorkGallery";
 import { requestBooking } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -68,6 +69,13 @@ export default async function ChannelPage({
       : null;
   const socials = SOCIALS.filter((sc) => (c.social_links as Record<string, string>)?.[sc.key]);
   const reels = ((c.reels as string[] | null) ?? []).map(reel);
+  const { data: workData } = await (await supabaseServer())
+    .from("portfolio_items")
+    .select("id,title,caption,image_url,before_url")
+    .eq("channel_id", c.id)
+    .order("sort_order")
+    .order("id");
+  const work = (workData ?? []) as WorkItem[];
   const shareUrl = `https://hublinkpro.com/channel/${c.slug}`;
   const isLive = c.status === "live";
 
@@ -155,6 +163,8 @@ export default async function ChannelPage({
             />
           </div>
         )}
+
+        <WorkGallery items={work} name={c.name} />
 
         {reels.length > 0 && (
           <>

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
@@ -149,4 +150,35 @@ export async function setRequestStatus(formData: FormData) {
   // RLS limits this to requests on the signed-in owner's own Channel.
   await supabase.from("booking_requests").update({ status }).eq("id", id);
   redirect("/dashboard#requests");
+}
+
+export async function addPortfolioItem(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id,slug").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch) redirect("/dashboard");
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const caption = String(formData.get("caption") ?? "").trim().slice(0, 300) || null;
+  const image = mediaUrl(formData.get("image_url"), user.id);
+  const before = mediaUrl(formData.get("before_url"), user.id);
+  if (!title || !image) redirect("/dashboard?work=missing#work");
+  // The database enforces the free-tier limit and that the Channel belongs to this owner (RLS).
+  const { error } = await supabase
+    .from("portfolio_items")
+    .insert({ channel_id: ch.id, title, caption, image_url: image, before_url: before });
+  if (error) redirect(`/dashboard?work=${error.message.includes("portfolio_limit") ? "limit" : "error"}#work`);
+  revalidatePath(`/channel/${ch.slug}`);
+  redirect("/dashboard?work=added#work");
+}
+
+export async function deletePortfolioItem(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) redirect("/dashboard");
+  // RLS limits deletes to items on the signed-in owner's own Channel.
+  await supabase.from("portfolio_items").delete().eq("id", id);
+  redirect("/dashboard?work=removed#work");
 }
