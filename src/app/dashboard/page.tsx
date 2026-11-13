@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem } from "./actions";
 import MediaField from "@/components/MediaField";
 import ShareChannel from "@/components/ShareChannel";
 import { SOCIALS } from "@/lib/media";
@@ -47,6 +47,23 @@ export default async function Dashboard({
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [] };
+  const { data: work } = ch
+    ? await supabase
+        .from("portfolio_items")
+        .select("id,title,caption,image_url,before_url,video_url")
+        .eq("channel_id", ch.id)
+        .order("sort_order")
+        .order("id")
+    : { data: [] };
+  const workLimit = ch?.tier === "pro" ? null : 3;
+  const workFull = workLimit !== null && (work?.length ?? 0) >= workLimit;
+  const WORK_MSG: Record<string, string> = {
+    added: "Added to your Channel.",
+    removed: "Removed.",
+    missing: "Add a photo or a video, and a short title.",
+    limit: "Free Channels can show 3 jobs. Remove one, or upgrade to show more.",
+    error: "Something went wrong. Try again.",
+  };
   const editable = !ch || ch.status !== "pending";
 
   return (
@@ -137,6 +154,52 @@ export default async function Dashboard({
                   </form>
                 </div>
               ))
+            )}
+          </section>
+        )}
+
+        {ch && (
+          <section id="work" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Your work</h2>
+            <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>
+              Show neighbors jobs you&apos;ve finished, as photos, videos, or reels. Add a &quot;before&quot; photo to a photo and visitors get a slider.
+              {workLimit !== null && ` Free Channels show up to ${workLimit} jobs (${work?.length ?? 0} used).`}
+            </p>
+            {sp.work && WORK_MSG[sp.work] && (
+              <p className={`note ${sp.work === "added" || sp.work === "removed" ? "ok" : ""}`}>{WORK_MSG[sp.work]}</p>
+            )}
+            <div className="workgrid">
+              {(work ?? []).map((w) => (
+                <div key={w.id} className="workitem">
+                  {w.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={w.image_url} alt="" />
+                  ) : (
+                    <video src={`${w.video_url}#t=0.1`} muted playsInline preload="metadata" />
+                  )}
+                  <div className="workmeta">
+                    <strong>{w.title}</strong>
+                    {w.video_url && <span className="statuspill">video</span>}
+                    {w.before_url && <span className="statuspill">before/after</span>}
+                    <form action={deletePortfolioItem}>
+                      <input type="hidden" name="id" value={w.id} />
+                      <button className="btn-ghost" type="submit">Remove</button>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {workFull ? (
+              <p className="lead" style={{ fontSize: 14 }}>You&apos;ve used all {workLimit} free spots. Remove one to add another.</p>
+            ) : (
+              <form action={addPortfolioItem} className="workadd">
+                <MediaField name="video_url" kind="reel" userId={user.id} label="Video or reel (optional)" help="Record or upload a short clip of the job, up to 50 MB. Vertical works best." />
+                <MediaField name="image_url" kind="work" userId={user.id} label="Photo of the finished job" help="JPG, PNG, or WebP, up to 8 MB. Use a photo, a video, or both." />
+                <MediaField name="before_url" kind="before" userId={user.id} label="Before photo (optional)" help="Same angle works best. Adds a before/after slider." />
+                <div className="field"><label htmlFor="w-title">Title</label><input id="w-title" name="title" maxLength={80} placeholder="Driveway repave, Kingsport" required /></div>
+                <div className="field"><label htmlFor="w-cap">Short note (optional)</label><input id="w-cap" name="caption" maxLength={300} placeholder="Two days, 1,200 sq ft" /></div>
+                <button className="btn-primary" type="submit">Add to my Channel</button>
+              </form>
             )}
           </section>
         )}
