@@ -27,3 +27,15 @@ export async function markMessageRead(formData: FormData) {
   await supabase.from("contact_messages").update({ read: true }).eq("id", id);
   revalidatePath("/admin");
 }
+
+export async function saveNote(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const userId = String(formData.get("user_id") ?? "");
+  const note = String(formData.get("note") ?? "").slice(0, 2000);
+  if (!/^[0-9a-f-]{36}$/i.test(userId)) return;
+  // admin_notes is admin-only via RLS.
+  await supabase.from("admin_notes").upsert({ user_id: userId, note, updated_at: new Date().toISOString() });
+  revalidatePath("/admin");
+}

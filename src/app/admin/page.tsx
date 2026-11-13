@@ -2,38 +2,152 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
-import { setChannelStatus, markMessageRead } from "./actions";
+import { setChannelStatus, markMessageRead, saveNote } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
 
-export default async function Admin() {
+type Signup = {
+  user_id: string; email: string; signed_up_at: string; last_sign_in_at: string | null;
+  channel_id: number | null; slug: string | null; name: string | null; status: string | null;
+  tier: string | null; city: string | null; network_name: string | null; phone: string | null;
+  sms_consent: boolean | null; has_video: boolean | null; has_logo: boolean | null;
+  service_count: number | null; channel_created_at: string | null; note: string;
+};
+const FILTERS = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Needs review" },
+  { key: "incomplete", label: "Incomplete" },
+  { key: "live", label: "Live" },
+  { key: "paused", label: "Paused" },
+] as const;
+const fmt = (d: string | null) =>
+  d ? new Date(d).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", year: "numeric" }) : "—";
+function bucket(s: Signup) {
+  if (!s.channel_id) return "incomplete"; // signed up, no Channel started
+  if (s.status === "draft") return "incomplete";
+  return s.status ?? "incomplete";
+}
+function missing(s: Signup) {
+  if (!s.channel_id) return ["Channel not started"];
+  const m: string[] = [];
+  if (!s.name) m.push("name");
+  if (!s.network_name) m.push("Network");
+  if (!s.phone) m.push("phone");
+  if (!s.service_count) m.push("services");
+  if (!s.has_logo) m.push("logo");
+  if (!s.has_video) m.push("video");
+  return m;
+}
+
+export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string }> }) {
+  const { f = "all", q = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
 
-  const { data: channels } = await supabase
-    .from("channels")
-    .select("id,slug,name,status,phone,website,booking_url,video_url,city,zip_codes,services,sms_consent,created_at,networks(name)")
-    .order("created_at", { ascending: false });
+  const { data: signupData } = await supabase.rpc("admin_signups");
+  const signups = (signupData ?? []) as Signup[];
+  const counts: Record<string, number> = { all: signups.length };
+  for (const s of signups) counts[bucket(s)] = (counts[bucket(s)] ?? 0) + 1;
+  const needle = q.trim().toLowerCase();
+  const shown = signups.filter((s) => {
+    if (f !== "all" && bucket(s) !== f) return false;
+    if (!needle) return true;
+    return [s.email, s.name, s.city, s.network_name, s.phone].some((v) => (v ?? "").toLowerCase().includes(needle));
+  });
+
   const { data: messages } = await supabase
     .from("contact_messages")
     .select("id,name,email,message,source_path,read,created_at")
     .order("created_at", { ascending: false })
     .limit(50);
   const unread = (messages ?? []).filter((m) => !m.read).length;
-  const order = { pending: 0, draft: 1, live: 2, paused: 3 } as Record<string, number>;
-  const sorted = [...(channels ?? [])].sort((a, b) => order[a.status] - order[b.status]);
-
   return (
     <>
       <nav className="nav">
         <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
-        <span style={{ color: "var(--color-muted)" }}>Admin · {sorted.length} Channels</span>
+        <span style={{ color: "var(--color-muted)" }}>Admin · {signups.length} signups</span>
         <span />
       </nav>
       <div className="page" style={{ maxWidth: 900 }}>
-        <h1>Inbox{unread > 0 ? ` (${unread} new)` : ""}</h1>
+        <h1>Signups</h1>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
+          {FILTERS.map((x) => (
+            <Link
+              key={x.key}
+              href={`/admin?f=${x.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              className={f === x.key ? "btn-primary" : "btn-ghost"}
+            >
+              {x.label} ({counts[x.key] ?? 0})
+            </Link>
+          ))}
+        </div>
+        <form method="get" style={{ marginBottom: 16 }}>
+          <input type="hidden" name="f" value={f} />
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder="Search email, business, city, Network, phone"
+            style={{ width: "100%", background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "10px 12px" }}
+          />
+        </form>
+        {shown.length === 0 && <p className="lead">No signups match.</p>}
+        {shown.map((s) => {
+          const miss = missing(s);
+          return (
+            <div key={s.user_id} className="autocard" style={{ marginBottom: 14 }}>
+              <h3>
+                {s.name ?? s.email}
+                <span className="statuspill" style={{ marginLeft: 8 }}>{s.channel_id ? (s.status === "draft" ? "draft" : s.status) : "no channel"}</span>
+                {s.tier === "pro" && <span className="statuspill" style={{ marginLeft: 6 }}>pro</span>}
+              </h3>
+              <p>
+                <a href={`mailto:${s.email}`}>{s.email}</a>{s.phone ? <> · <a href={`tel:${s.phone}`}>{s.phone}</a></> : null}
+                <br />{s.network_name ?? "No Network"} · {s.city ?? "no city"} · SMS consent: {s.sms_consent ? "yes" : "no"}
+                <br />Signed up {fmt(s.signed_up_at)} · Last sign-in {fmt(s.last_sign_in_at)}
+                {miss.length > 0 && <><br />Missing: {miss.join(", ")}</>}
+              </p>
+              <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
+                {s.slug && <Link href={`/channel/${s.slug}`} className="btn-ghost">Preview</Link>}
+                {s.channel_id && s.status !== "live" && (
+                  <form action={setChannelStatus}>
+                    <input type="hidden" name="id" value={s.channel_id} />
+                    <input type="hidden" name="status" value="live" />
+                    <button className="btn-primary" type="submit">Approve &amp; publish</button>
+                  </form>
+                )}
+                {s.channel_id && s.status === "live" && (
+                  <form action={setChannelStatus}>
+                    <input type="hidden" name="id" value={s.channel_id} />
+                    <input type="hidden" name="status" value="paused" />
+                    <button className="btn-ghost" type="submit">Pause</button>
+                  </form>
+                )}
+                {s.channel_id && s.status !== "paused" && s.status !== "live" && (
+                  <form action={setChannelStatus}>
+                    <input type="hidden" name="id" value={s.channel_id} />
+                    <input type="hidden" name="status" value="paused" />
+                    <button className="btn-ghost" type="submit">Reject / pause</button>
+                  </form>
+                )}
+              </div>
+              <form action={saveNote} style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                <input type="hidden" name="user_id" value={s.user_id} />
+                <input
+                  name="note"
+                  defaultValue={s.note}
+                  maxLength={2000}
+                  placeholder="Private note (only you see this)"
+                  style={{ flex: 1, background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "8px 10px" }}
+                />
+                <button className="btn-ghost" type="submit">Save note</button>
+              </form>
+            </div>
+          );
+        })}
+
+        <h1 style={{ marginTop: 40 }}>Inbox{unread > 0 ? ` (${unread} new)` : ""}</h1>
         {(messages ?? []).length === 0 && <p className="lead">No messages yet.</p>}
         {(messages ?? []).map((m) => (
           <div key={m.id} className="autocard" style={{ marginBottom: 14, opacity: m.read ? 0.6 : 1 }}>
@@ -51,39 +165,6 @@ export default async function Admin() {
           </div>
         ))}
 
-        <h1 style={{ marginTop: 40 }}>Channels</h1>
-        {sorted.length === 0 && <p className="lead">No Channels yet.</p>}
-        {sorted.map((c) => {
-          const net = Array.isArray(c.networks) ? c.networks[0] : c.networks;
-          return (
-            <div key={c.id} className="autocard" style={{ marginBottom: 14 }}>
-              <h3>{c.name} <span className="statuspill" style={{ marginLeft: 8 }}>{c.status}</span></h3>
-              <p>
-                {net?.name ?? "No network"} · {c.city ?? "no city"} · {c.zip_codes?.join(", ") || "no ZIPs"}
-                <br />Services: {c.services?.join(", ") || "none listed"}
-                <br />Phone: {c.phone ?? "—"} · SMS consent: {c.sms_consent ? "yes" : "no"}
-                <br />Booking: {c.booking_url ?? "—"} · Video: {c.video_url ?? "—"} · Site: {c.website ?? "—"}
-              </p>
-              <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-                <Link href={`/channel/${c.slug}`} className="btn-ghost">Preview</Link>
-                {c.status !== "live" && (
-                  <form action={setChannelStatus}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <input type="hidden" name="status" value="live" />
-                    <button className="btn-primary" type="submit">Approve &amp; publish</button>
-                  </form>
-                )}
-                {c.status === "live" && (
-                  <form action={setChannelStatus}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <input type="hidden" name="status" value="paused" />
-                    <button className="btn-ghost" type="submit">Pause</button>
-                  </form>
-                )}
-              </div>
-            </div>
-          );
-        })}
       </div>
     </>
   );
