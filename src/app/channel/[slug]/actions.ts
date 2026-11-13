@@ -136,8 +136,9 @@ export async function bookSlot(formData: FormData) {
   const zone = tzLabel(ch.booking_timezone);
 
   // Best-effort emails. The booking is already saved.
+  let emailed = false;
   if (email) {
-    await sendEmail({
+    emailed = await sendEmail({
       to: email,
       subject: `You're booked with ${ch.name}: ${when}`,
       text:
@@ -163,5 +164,5 @@ export async function bookSlot(formData: FormData) {
     });
   }
 
-  redirect(`${back}?booked=${encodeURIComponent(startIso)}#book`);
+  redirect(`${back}?booked=${encodeURIComponent(startIso)}${emailed ? "&emailed=1" : ""}#book`);
 }

@@ -223,6 +223,7 @@ export default async function ChannelPage({
             selectedDay={sp.day ?? null}
             selectedSlot={sp.slot ?? null}
             booked={sp.booked ?? null}
+            emailed={sp.emailed === "1"}
             error={sp.bkerror ?? null}
           />
         )}

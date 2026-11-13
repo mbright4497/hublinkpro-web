@@ -11,6 +11,7 @@ type Props = {
   selectedDay: string | null;
   selectedSlot: string | null;
   booked: string | null; // ISO of a just-booked slot
+  emailed: boolean; // a confirmation email really went out
   error: string | null;
 };
 
@@ -22,13 +23,13 @@ const ERRORS: Record<string, string> = {
   error: "Something went wrong. Please try again.",
 };
 
-export default function BookTime({ slug, name, tz, services, days, selectedDay, selectedSlot, booked, error }: Props) {
+export default function BookTime({ slug, name, tz, services, days, selectedDay, selectedSlot, booked, emailed, error }: Props) {
   if (booked) {
     return (
       <section id="book" className="bookbox">
         <h2 style={{ fontSize: 20, marginTop: 0 }}>You&apos;re booked</h2>
         <p className="note ok">
-          {name} has you down for {fmtWhen(booked, tz)} ({tzLabel(tz)} time). If you gave an email, a confirmation is on its way.
+          {name} has you down for {fmtWhen(booked, tz)} ({tzLabel(tz)} time).{emailed ? " A confirmation is on its way to your email." : ""}
         </p>
       </section>
     );

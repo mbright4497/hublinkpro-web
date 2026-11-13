@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
+import { FROM } from "@/lib/notify";
 
 const clip = (v: FormDataEntryValue | null, n: number) => String(v ?? "").trim().slice(0, n);
 
@@ -30,7 +31,7 @@ export async function sendMessage(formData: FormData) {
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: "HubLinkPro <login@hublinkpro.com>",
+          from: FROM,
           to: [process.env.CONTACT_NOTIFY_EMAIL || ADMIN_EMAIL],
           reply_to: email,
           subject: `New HubLinkPro message from ${name}`,
