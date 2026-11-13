@@ -183,3 +183,17 @@ export async function deletePortfolioItem(formData: FormData) {
   await supabase.from("portfolio_items").delete().eq("id", id);
   redirect("/dashboard?work=removed#work");
 }
+
+
+export async function redeemCode(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const code = String(formData.get("code") ?? "").trim().slice(0, 40);
+  if (!code) redirect("/dashboard?code=empty#plan");
+  // The database checks the code, the limits, and who you are. Nothing here can grant Pro by itself.
+  const { data, error } = await supabase.rpc("redeem_promo", { p_code: code });
+  const result = error ? "error" : String(data ?? "error");
+  revalidatePath("/dashboard");
+  redirect(`/dashboard?code=${encodeURIComponent(result)}#plan`);
+}

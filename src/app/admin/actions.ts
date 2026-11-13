@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { randomInt } from "node:crypto";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
 
@@ -37,5 +38,37 @@ export async function saveNote(formData: FormData) {
   if (!/^[0-9a-f-]{36}$/i.test(userId)) return;
   // admin_notes is admin-only via RLS.
   await supabase.from("admin_notes").upsert({ user_id: userId, note, updated_at: new Date().toISOString() });
+  revalidatePath("/admin");
+}
+
+
+const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // no 0/O/1/I/L lookalikes
+
+export async function createCode(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  let code = String(formData.get("code") ?? "").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 40);
+  if (!code) code = "HLP-" + Array.from({ length: 6 }, () => CODE_CHARS[randomInt(CODE_CHARS.length)]).join("");
+  if (code.length < 4) redirect("/admin?code=short");
+  const label = String(formData.get("label") ?? "").trim().slice(0, 120);
+  const months = Math.min(60, Math.max(1, Number(formData.get("months")) || 12));
+  const max_uses = Math.min(1000, Math.max(1, Number(formData.get("max_uses")) || 1));
+  const exp = String(formData.get("expires") ?? "");
+  const expires_at = /^\d{4}-\d{2}-\d{2}$/.test(exp) ? new Date(`${exp}T23:59:59-05:00`).toISOString() : null;
+  // promo_codes is admin-only via RLS.
+  const { error } = await supabase.from("promo_codes").insert({ code, label, months, max_uses, expires_at });
+  if (error) redirect(`/admin?code=${error.code === "23505" ? "dup" : "error"}`);
+  revalidatePath("/admin");
+  redirect(`/admin?code=made&c=${encodeURIComponent(code)}`);
+}
+
+export async function setCodeActive(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const id = Number(formData.get("id"));
+  if (!id) return;
+  await supabase.from("promo_codes").update({ active: formData.get("active") === "1" }).eq("id", id);
   revalidatePath("/admin");
 }
