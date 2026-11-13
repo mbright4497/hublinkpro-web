@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { saveChannel, signOut, setRequestStatus } from "./actions";
 import MediaField from "@/components/MediaField";
+import ShareChannel from "@/components/ShareChannel";
 import { SOCIALS } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
@@ -82,6 +83,26 @@ export default async function Dashboard({
               Preview your Channel →
             </Link>
           </p>
+        )}
+
+        {ch && ch.status === "live" && (
+          <section id="share" className="sharebox" style={{ margin: "8px 0 28px" }}>
+            <div>
+              <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Share your Channel</h2>
+              <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>
+                Put this QR code on your truck, yard signs, invoices, or business cards. Scans open your Channel.
+              </p>
+              <p style={{ fontSize: 14, margin: "0 0 12px", wordBreak: "break-all" }}>
+                hublinkpro.com/channel/{ch.slug}
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <ShareChannel url={`https://hublinkpro.com/channel/${ch.slug}`} name={ch.name} />
+                <a href={`/channel/${ch.slug}/qr?download=1`} className="btn-ghost">⬇ Download QR</a>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/channel/${ch.slug}/qr`} alt={`QR code for ${ch.name}`} width={132} height={132} className="qrimg" />
+          </section>
         )}
 
         {ch && (
