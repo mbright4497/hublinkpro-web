@@ -193,9 +193,9 @@ export default async function Dashboard({
               <p className="lead" style={{ fontSize: 14 }}>You&apos;ve used all {workLimit} free spots. Remove one to add another.</p>
             ) : (
               <form action={addPortfolioItem} className="workadd">
-                <MediaField name="video_url" kind="reel" userId={user.id} label="Video or reel (optional)" help="Record or upload a short clip of the job, up to 50 MB. Vertical works best." />
-                <MediaField name="image_url" kind="work" userId={user.id} label="Photo of the finished job" help="JPG, PNG, or WebP, up to 8 MB. Use a photo, a video, or both." />
-                <MediaField name="before_url" kind="before" userId={user.id} label="Before photo (optional)" help="Same angle works best. Adds a before/after slider." />
+                <MediaField name="video_url" kind="reel" savedBy="“Add to my Channel” (below)" userId={user.id} label="Video or reel (optional)" help="Record or upload a short clip of the job, up to 50 MB. Vertical works best." />
+                <MediaField name="image_url" kind="work" savedBy="“Add to my Channel” (below)" userId={user.id} label="Photo of the finished job" help="JPG, PNG, or WebP, up to 8 MB. Use a photo, a video, or both." />
+                <MediaField name="before_url" kind="before" savedBy="“Add to my Channel” (below)" userId={user.id} label="Before photo (optional)" help="Same angle works best. Adds a before/after slider." />
                 <div className="field"><label htmlFor="w-title">Title</label><input id="w-title" name="title" maxLength={80} placeholder="Driveway repave, Kingsport" required /></div>
                 <div className="field"><label htmlFor="w-cap">Short note (optional)</label><input id="w-cap" name="caption" maxLength={300} placeholder="Two days, 1,200 sq ft" /></div>
                 <button className="btn-primary" type="submit">Add to my Channel</button>
