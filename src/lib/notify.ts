@@ -3,7 +3,8 @@
 // Resend is called with raw fetch (no SDK). Missing keys just mean "skip quietly".
 import { SUPABASE_URL } from "@/lib/supabase/env";
 
-const FROM = "HubLinkPro <login@hublinkpro.com>";
+// Sender is set in Vercel as RESEND_FROM (must be on a domain verified in Resend).
+export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
 export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string }) {
   const key = process.env.RESEND_API_KEY;
