@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking } from "./actions";
+import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
 import ShareChannel from "@/components/ShareChannel";
@@ -48,6 +49,28 @@ export default async function Dashboard({
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [] };
+  const [{ data: rules }, { data: upcoming }] = ch
+    ? await Promise.all([
+        supabase.from("availability_rules").select("weekday,start_time,end_time").eq("channel_id", ch.id),
+        supabase
+          .from("bookings")
+          .select("id,name,phone,email,service,message,starts_at,sms_consent")
+          .eq("channel_id", ch.id)
+          .eq("status", "confirmed")
+          .gte("starts_at", new Date().toISOString())
+          .order("starts_at")
+          .limit(50),
+      ])
+    : [{ data: [] }, { data: [] }];
+  const ruleByDay = new Map((rules ?? []).map((r) => [r.weekday as number, r]));
+  const CAL_MSG: Record<string, string> = {
+    saved: "Calendar saved.",
+    cancelled: "Booking cancelled. That time is open again.",
+    invalid: "Check the settings and try again.",
+    hours: "End time must be after start time.",
+    nodays: "Pick at least one day to take bookings.",
+    error: "Something went wrong. Try again.",
+  };
   const { data: work } = ch
     ? await supabase
         .from("portfolio_items")
@@ -133,6 +156,82 @@ export default async function Dashboard({
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/channel/${ch.slug}/qr`} alt={`QR code for ${ch.name}`} width={132} height={132} className="qrimg" />
+          </section>
+        )}
+
+        {ch && (
+          <section id="bookings" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Booking calendar</h2>
+            {sp.cal && CAL_MSG[sp.cal] && <p className={`note ${sp.cal === "saved" || sp.cal === "cancelled" ? "ok" : ""}`}>{CAL_MSG[sp.cal]}</p>}
+            <p className="lead" style={{ fontSize: 14 }}>
+              Set your hours and neighbors can book a time right on your Channel page. Two people can never book the same slot.
+            </p>
+            <form action={saveAvailability}>
+              <label className="consent">
+                <input type="checkbox" name="booking_enabled" defaultChecked={ch.booking_enabled} />
+                <span>Take bookings on my Channel page</span>
+              </label>
+              <div className="field">
+                <label htmlFor="cal-slot">Appointment length</label>
+                <select id="cal-slot" name="slot_minutes" defaultValue={ch.slot_minutes}>
+                  {SLOT_LENGTHS.map((m) => <option key={m} value={m}>{m} minutes</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="cal-tz">Your time zone</label>
+                <select id="cal-tz" name="booking_timezone" defaultValue={ch.booking_timezone}>
+                  {TIMEZONES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div className="field">
+                <label htmlFor="cal-notice">Earliest booking (hours from now)</label>
+                <input id="cal-notice" name="booking_notice_hours" type="number" min={0} max={336} defaultValue={ch.booking_notice_hours} />
+              </div>
+              <div className="field">
+                <label htmlFor="cal-window">How far ahead people can book (days)</label>
+                <input id="cal-window" name="booking_window_days" type="number" min={1} max={90} defaultValue={ch.booking_window_days} />
+              </div>
+              <fieldset style={{ border: 0, padding: 0, margin: "0 0 14px" }}>
+                <legend style={{ fontWeight: 600, marginBottom: 8 }}>Your hours</legend>
+                {WEEKDAYS.map((name, d) => {
+                  const r = ruleByDay.get(d);
+                  return (
+                    <div key={d} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", margin: "6px 0" }}>
+                      <label style={{ width: 120, display: "flex", gap: 8, alignItems: "center" }}>
+                        <input type="checkbox" name={`day_${d}`} defaultChecked={!!r} /> {name}
+                      </label>
+                      <input type="time" name={`start_${d}`} defaultValue={r ? String(r.start_time).slice(0, 5) : "09:00"} aria-label={`${name} start`} />
+                      <span>to</span>
+                      <input type="time" name={`end_${d}`} defaultValue={r ? String(r.end_time).slice(0, 5) : "17:00"} aria-label={`${name} end`} />
+                    </div>
+                  );
+                })}
+              </fieldset>
+              <button className="btn-primary" type="submit">Save calendar</button>
+            </form>
+
+            <h3 style={{ fontSize: 16, margin: "24px 0 8px" }}>Upcoming bookings</h3>
+            {!upcoming?.length ? (
+              <p className="lead" style={{ fontSize: 14 }}>
+                {ch.booking_enabled ? "Nothing booked yet." : "Turn on bookings above and times show up on your Channel page."}
+              </p>
+            ) : (
+              upcoming.map((b) => (
+                <div key={b.id} className="reqrow">
+                  <strong>{fmtWhen(b.starts_at, ch.booking_timezone)}</strong> · {b.name} ·{" "}
+                  <a href={`tel:${b.phone.replace(/[^0-9+]/g, "")}`} style={{ color: "var(--color-brand2)" }}>{b.phone}</a>
+                  {b.email && <> · <a href={`mailto:${b.email}`} style={{ color: "var(--color-brand2)" }}>{b.email}</a></>}
+                  <div className="meta">
+                    {b.service ? `${b.service} · ` : ""}{b.sms_consent ? "OK to text" : "call or email only"}
+                  </div>
+                  {b.message && <p style={{ margin: "8px 0 0", whiteSpace: "pre-wrap" }}>{b.message}</p>}
+                  <form action={cancelBooking} style={{ marginTop: 10 }}>
+                    <input type="hidden" name="id" value={b.id} />
+                    <button className="btn-ghost" type="submit">Cancel this booking</button>
+                  </form>
+                </div>
+              ))
+            )}
           </section>
         )}
 
