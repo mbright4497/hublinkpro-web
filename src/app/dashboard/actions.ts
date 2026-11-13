@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
+import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -196,4 +197,69 @@ export async function redeemCode(formData: FormData) {
   const result = error ? "error" : String(data ?? "error");
   revalidatePath("/dashboard");
   redirect(`/dashboard?code=${encodeURIComponent(result)}#plan`);
+}
+
+// Owner's booking calendar: on/off, slot length, notice, window, and one working window per weekday.
+export async function saveAvailability(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id,slug").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch) redirect("/dashboard");
+
+  const enabled = formData.get("booking_enabled") === "on";
+  const slot = Number(formData.get("slot_minutes"));
+  const tz = String(formData.get("booking_timezone") ?? "");
+  const notice = Number(formData.get("booking_notice_hours"));
+  const windowDays = Number(formData.get("booking_window_days"));
+  if (
+    !SLOT_LENGTHS.includes(slot) ||
+    !TIMEZONES.some((t) => t.value === tz) ||
+    !Number.isInteger(notice) || notice < 0 || notice > 336 ||
+    !Number.isInteger(windowDays) || windowDays < 1 || windowDays > 90
+  ) redirect("/dashboard?cal=invalid#bookings");
+
+  const time = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const rules: { channel_id: number; weekday: number; start_time: string; end_time: string }[] = [];
+  for (let d = 0; d < 7; d++) {
+    if (formData.get(`day_${d}`) !== "on") continue;
+    const start = String(formData.get(`start_${d}`) ?? "");
+    const end = String(formData.get(`end_${d}`) ?? "");
+    if (!time.test(start) || !time.test(end) || end <= start) redirect("/dashboard?cal=hours#bookings");
+    rules.push({ channel_id: ch.id, weekday: d, start_time: start, end_time: end });
+  }
+  if (enabled && rules.length === 0) redirect("/dashboard?cal=nodays#bookings");
+
+  // RLS limits both writes to this owner's own Channel.
+  const { error: upErr } = await supabase
+    .from("channels")
+    .update({
+      booking_enabled: enabled,
+      slot_minutes: slot,
+      booking_timezone: tz,
+      booking_notice_hours: notice,
+      booking_window_days: windowDays,
+    })
+    .eq("id", ch.id);
+  if (upErr) redirect("/dashboard?cal=error#bookings");
+
+  const { error: delErr } = await supabase.from("availability_rules").delete().eq("channel_id", ch.id);
+  if (delErr) redirect("/dashboard?cal=error#bookings");
+  if (rules.length) {
+    const { error: insErr } = await supabase.from("availability_rules").insert(rules);
+    if (insErr) redirect("/dashboard?cal=error#bookings");
+  }
+  revalidatePath(`/channel/${ch.slug}`);
+  redirect("/dashboard?cal=saved#bookings");
+}
+
+export async function cancelBooking(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) redirect("/dashboard#bookings");
+  // RLS limits this to bookings on the signed-in owner's own Channel.
+  await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id).eq("status", "confirmed");
+  redirect("/dashboard?cal=cancelled#bookings");
 }

@@ -6,6 +6,8 @@ import { SOCIALS, reel } from "@/lib/media";
 import { youtubeVideoEmbed, youtubeChannelEmbed } from "@/lib/youtube";
 import ShareChannel from "@/components/ShareChannel";
 import WorkGallery, { type WorkItem } from "@/components/WorkGallery";
+import BookTime from "@/components/BookTime";
+import { addDays, dayKey } from "@/lib/booking";
 import { requestBooking } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +81,25 @@ export default async function ChannelPage({
   const shareUrl = `https://hublinkpro.com/channel/${c.slug}`;
   const isLive = c.status === "live";
 
+  // Native booking: open slots for the next few weeks, grouped by the business's local day.
+  const bookable = isLive && c.booking_enabled === true;
+  const tz: string = c.booking_timezone ?? "America/New_York";
+  let slotDays: { key: string; slots: string[] }[] = [];
+  if (bookable) {
+    const today = dayKey(new Date(), tz);
+    const { data: slotRows } = await (await supabaseServer()).rpc("open_slots", {
+      p_channel_id: c.id,
+      p_from: today,
+      p_to: addDays(today, Math.min(Number(c.booking_window_days ?? 30), 28)),
+    });
+    const map = new Map<string, string[]>();
+    for (const r of (slotRows ?? []) as { slot_start: string }[]) {
+      const k = dayKey(r.slot_start, tz);
+      map.set(k, [...(map.get(k) ?? []), r.slot_start]);
+    }
+    slotDays = [...map.entries()].map(([key, slots]) => ({ key, slots }));
+  }
+
   return (
     <>
       <nav className="nav">
@@ -104,7 +125,7 @@ export default async function ChannelPage({
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "0 0 28px" }}>
           {c.status === "live" && (
-            <a href="#book" className="btn-primary">📅 Request a booking</a>
+            <a href="#book" className="btn-primary">{bookable ? "📅 Book a time" : "📅 Request a booking"}</a>
           )}
           {c.booking_url && (
             <a href={c.booking_url} target="_blank" rel="noopener noreferrer" className="btn-ghost">🗓 Their calendar</a>
@@ -192,9 +213,23 @@ export default async function ChannelPage({
           </>
         )}
 
-        {c.status === "live" && (
-          <section id="book" className="bookbox">
-            <h2 style={{ fontSize: 20, marginTop: 0 }}>Request a booking</h2>
+        {bookable && (
+          <BookTime
+            slug={c.slug}
+            name={c.name}
+            tz={tz}
+            services={c.services ?? []}
+            days={slotDays}
+            selectedDay={sp.day ?? null}
+            selectedSlot={sp.slot ?? null}
+            booked={sp.booked ?? null}
+            error={sp.bkerror ?? null}
+          />
+        )}
+
+        {c.status === "live" && !sp.booked && (
+          <section id={bookable ? "request" : "book"} className="bookbox">
+            <h2 style={{ fontSize: 20, marginTop: 0 }}>{bookable ? "Or send a request instead" : "Request a booking"}</h2>
             {sp.requested ? (
               <p className="note ok">Sent. {c.name} will contact you at the number you gave.</p>
             ) : (
