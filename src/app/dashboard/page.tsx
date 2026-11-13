@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls } from "./actions";
 import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
@@ -62,6 +62,21 @@ export default async function Dashboard({
           .limit(50),
       ])
     : [{ data: [] }, { data: [] }];
+  const { data: calls } = ch
+    ? await supabase
+        .from("call_logs")
+        .select("id,from_number,status,duration_seconds,texted,created_at")
+        .eq("channel_id", ch.id)
+        .order("created_at", { ascending: false })
+        .limit(25)
+    : { data: [] };
+  const CALLS_MSG: Record<string, string> = {
+    saved: "Call settings saved.",
+    badphone: "Enter a 10-digit US phone number.",
+    nonumber: "Your tracking number isn't set up yet, so text-back can't be turned on.",
+    nophone: "Add the phone to ring before turning on text-back.",
+    error: "Something went wrong. Try again.",
+  };
   const ruleByDay = new Map((rules ?? []).map((r) => [r.weekday as number, r]));
   const CAL_MSG: Record<string, string> = {
     saved: "Calendar saved.",
@@ -229,6 +244,47 @@ export default async function Dashboard({
                     <input type="hidden" name="id" value={b.id} />
                     <button className="btn-ghost" type="submit">Cancel this booking</button>
                   </form>
+                </div>
+              ))
+            )}
+          </section>
+        )}
+
+        {ch && (
+          <section id="calls" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Calls</h2>
+            {sp.calls && CALLS_MSG[sp.calls] && <p className={`note ${sp.calls === "saved" ? "ok" : ""}`}>{CALLS_MSG[sp.calls]}</p>}
+            {!ch.tracking_number ? (
+              <p className="lead" style={{ fontSize: 14 }}>
+                Your HubLinkPro tracking number isn&apos;t assigned yet. Once it is, calls to it ring your phone and show up here, and you can text missed callers your booking link.
+              </p>
+            ) : (
+              <p className="lead" style={{ fontSize: 14 }}>
+                Your tracking number is <strong>{String(ch.tracking_number).replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3")}</strong>. Calls to it ring the phone below.
+              </p>
+            )}
+            <form action={saveCalls}>
+              <div className="field">
+                <label htmlFor="calls-fwd">Ring this phone</label>
+                <input id="calls-fwd" name="forward_to" type="tel" inputMode="tel" placeholder="(423) 555-0100" defaultValue={ch.forward_to ? String(ch.forward_to).replace(/^\+1(\d{3})(\d{3})(\d{4})$/, "($1) $2-$3") : ""} />
+              </div>
+              <label className="consent">
+                <input type="checkbox" name="missed_call_text" defaultChecked={ch.missed_call_text} />
+                <span>When I miss a call, text the caller a link to book a time</span>
+              </label>
+              <button className="btn-primary" type="submit">Save call settings</button>
+            </form>
+            <h3 style={{ fontSize: 16, margin: "24px 0 8px" }}>Recent calls</h3>
+            {!calls?.length ? (
+              <p className="lead" style={{ fontSize: 14 }}>No calls yet.</p>
+            ) : (
+              calls.map((c) => (
+                <div key={c.id} className="reqrow">
+                  <strong>{c.from_number ?? "Private number"}</strong> ·{" "}
+                  {c.status === "answered" ? "Answered" : c.status === "missed" ? "Missed" : c.status === "failed" ? "Could not connect" : "Ringing"}
+                  {c.status === "answered" && c.duration_seconds ? ` (${c.duration_seconds}s)` : ""}
+                  {c.texted ? " · booking link texted" : ""}
+                  <div className="meta">{fmtWhen(c.created_at, ch.booking_timezone)}</div>
                 </div>
               ))
             )}

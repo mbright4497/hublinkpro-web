@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { randomInt } from "node:crypto";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
+import { toE164 } from "@/lib/twilio";
 
 export async function setChannelStatus(formData: FormData) {
   const supabase = await supabaseServer();
@@ -71,4 +72,19 @@ export async function setCodeActive(formData: FormData) {
   if (!id) return;
   await supabase.from("promo_codes").update({ active: formData.get("active") === "1" }).eq("id", id);
   revalidatePath("/admin");
+}
+
+export async function assignTrackingNumber(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const raw = String(formData.get("number") ?? "").trim();
+  const number = raw ? toE164(raw) : null; // blank clears the number
+  if (!slug || (raw && !number)) redirect("/admin?trk=invalid#tracking");
+  const { data, error } = await supabase.from("channels").update({ tracking_number: number }).eq("slug", slug).select("id");
+  if (error) redirect(`/admin?trk=${error.code === "23505" ? "taken" : "error"}#tracking`);
+  if (!data?.length) redirect("/admin?trk=noslug#tracking");
+  revalidatePath("/admin");
+  redirect("/admin?trk=saved#tracking");
 }

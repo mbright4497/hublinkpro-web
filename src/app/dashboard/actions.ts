@@ -6,6 +6,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
 import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
+import { toE164 } from "@/lib/twilio";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -262,4 +263,25 @@ export async function cancelBooking(formData: FormData) {
   // RLS limits this to bookings on the signed-in owner's own Channel.
   await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id).eq("status", "confirmed");
   redirect("/dashboard?cal=cancelled#bookings");
+}
+
+export async function saveCalls(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id,tracking_number").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch) redirect("/dashboard");
+
+  const raw = String(formData.get("forward_to") ?? "").trim();
+  const forward = raw ? toE164(raw) : null;
+  if (raw && !forward) redirect("/dashboard?calls=badphone#calls");
+  const textBack = formData.get("missed_call_text") === "on";
+  if (textBack && !ch.tracking_number) redirect("/dashboard?calls=nonumber#calls");
+  if (textBack && !forward) redirect("/dashboard?calls=nophone#calls");
+
+  // RLS limits this to the owner's own Channel; the database trigger stops owners touching tracking_number.
+  const { error } = await supabase.from("channels").update({ forward_to: forward, missed_call_text: textBack }).eq("id", ch.id);
+  if (error) redirect("/dashboard?calls=error#calls");
+  revalidatePath("/dashboard");
+  redirect("/dashboard?calls=saved#calls");
 }

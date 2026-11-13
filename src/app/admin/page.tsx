@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
-import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive } from "./actions";
+import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
@@ -41,8 +41,8 @@ function missing(s: Signup) {
   return m;
 }
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string }> }) {
-  const { f = "all", q = "", code: codeMsg = "", c: newCode = "" } = await searchParams;
+export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string; trk?: string }> }) {
+  const { f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
@@ -64,6 +64,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     .order("created_at", { ascending: false })
     .limit(50);
   const { data: codes } = await supabase.from("promo_codes").select("id,code,label,months,max_uses,uses,expires_at,active").order("id", { ascending: false });
+  const { data: tracked } = await supabase.from("channels").select("slug,name,tracking_number,forward_to,missed_call_text").not("tracking_number", "is", null).order("name");
+  const TRK_MSG: Record<string, string> = {
+    saved: "Tracking number saved.", invalid: "Enter a Channel slug and a 10-digit US number.",
+    taken: "That number is already assigned to another Channel.", noslug: "No Channel has that slug.", error: "Couldn't save. Try again.",
+  };
   const unread = (messages ?? []).filter((m) => !m.read).length;
   return (
     <>
@@ -103,6 +108,22 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           </div>
         ))}
         {!(codes ?? []).length && <p className="lead" style={{ fontSize: 14 }}>No codes yet.</p>}
+
+        <h1 id="tracking" style={{ marginTop: 32 }}>Tracking numbers</h1>
+        <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Assign a Twilio number you bought to a Channel by its slug. Leave the number blank to remove it. The owner sets which phone it rings.</p>
+        {trk && TRK_MSG[trk] && <p className={`note ${trk === "saved" ? "ok" : ""}`}>{TRK_MSG[trk]}</p>}
+        <form action={assignTrackingNumber} className="autocard" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", marginBottom: 12 }}>
+          <div className="field"><label htmlFor="t-slug">Channel slug</label><input id="t-slug" name="slug" maxLength={80} /></div>
+          <div className="field"><label htmlFor="t-num">Twilio number</label><input id="t-num" name="number" type="tel" placeholder="(423) 555-0100" /></div>
+          <div style={{ display: "flex", alignItems: "end", marginBottom: 14 }}><button className="btn-primary" type="submit">Save number</button></div>
+        </form>
+        {(tracked ?? []).map((t) => (
+          <div key={t.slug} className="autocard" style={{ marginBottom: 8 }}>
+            <strong>{t.name}</strong> <span style={{ color: "var(--color-muted)", fontSize: 13 }}>/{t.slug}</span><br />
+            <span style={{ fontSize: 13 }}>{t.tracking_number} → {t.forward_to ?? "no phone set"}{t.missed_call_text ? " · text-back on" : ""}</span>
+          </div>
+        ))}
+        {!(tracked ?? []).length && <p className="lead" style={{ fontSize: 14 }}>No tracking numbers assigned yet.</p>}
 
         <h1 style={{ marginTop: 32 }}>Signups</h1>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "12px 0" }}>
