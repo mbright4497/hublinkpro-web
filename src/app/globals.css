@@ -335,3 +335,6 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .poster.slot .nicon { color: var(--color-brand2); font-weight: 300; }
 .poster.slot .slotpill { position: absolute; top: 14px; left: 14px; right: 14px; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--color-light); }
 .poster.slot:hover { border-color: var(--color-brand2); }
+
+.fbfeed { margin-bottom: 28px; }
+.fbfeed p { margin: 12px 0 0; }
