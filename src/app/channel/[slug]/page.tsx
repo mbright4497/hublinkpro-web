@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SOCIALS, reel } from "@/lib/media";
 import { youtubeVideoEmbed, youtubeChannelEmbed } from "@/lib/youtube";
+import ShareChannel from "@/components/ShareChannel";
 import { requestBooking } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,8 @@ export default async function ChannelPage({
       : null;
   const socials = SOCIALS.filter((sc) => (c.social_links as Record<string, string>)?.[sc.key]);
   const reels = ((c.reels as string[] | null) ?? []).map(reel);
+  const shareUrl = `https://hublinkpro.com/channel/${c.slug}`;
+  const isLive = c.status === "live";
 
   return (
     <>
@@ -229,7 +232,32 @@ export default async function ChannelPage({
             <div className="chips">{c.zip_codes.map((z: string) => <span key={z}>{z}</span>)}</div>
           </>
         )}
+
+        {isLive && (
+          <section className="sharebox" aria-label="Share this Channel">
+            <div>
+              <h2 style={{ fontSize: 20, margin: "0 0 6px" }}>Share {c.name}</h2>
+              <p style={{ color: "var(--color-mist)", margin: "0 0 14px" }}>Send this Channel to a neighbor, or print the QR code for a truck window, yard sign, or business card.</p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <ShareChannel url={shareUrl} name={c.name} />
+                <a href={`/channel/${c.slug}/qr?download=1`} className="btn-ghost">⬇ Download QR</a>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`/channel/${c.slug}/qr`} alt={`QR code for ${c.name}`} width={132} height={132} className="qrimg" />
+          </section>
+        )}
       </div>
+
+      {isLive && (
+        <div className="actionbar" role="navigation" aria-label="Quick actions">
+          {c.phone && (
+            <a href={`tel:${c.phone.replace(/[^0-9+]/g, "")}`} className="abtn">📞 Call</a>
+          )}
+          <a href="#book" className="abtn primary">📅 Book</a>
+          <ShareChannel url={shareUrl} name={c.name} variant="bar" />
+        </div>
+      )}
     </>
   );
 }
