@@ -161,12 +161,13 @@ export async function addPortfolioItem(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim().slice(0, 80);
   const caption = String(formData.get("caption") ?? "").trim().slice(0, 300) || null;
   const image = mediaUrl(formData.get("image_url"), user.id);
-  const before = mediaUrl(formData.get("before_url"), user.id);
-  if (!title || !image) redirect("/dashboard?work=missing#work");
+  const before = image ? mediaUrl(formData.get("before_url"), user.id) : null;
+  const video = mediaUrl(formData.get("video_url"), user.id);
+  if (!title || (!image && !video)) redirect("/dashboard?work=missing#work");
   // The database enforces the free-tier limit and that the Channel belongs to this owner (RLS).
   const { error } = await supabase
     .from("portfolio_items")
-    .insert({ channel_id: ch.id, title, caption, image_url: image, before_url: before });
+    .insert({ channel_id: ch.id, title, caption, image_url: image, before_url: before, video_url: video });
   if (error) redirect(`/dashboard?work=${error.message.includes("portfolio_limit") ? "limit" : "error"}#work`);
   revalidatePath(`/channel/${ch.slug}`);
   redirect("/dashboard?work=added#work");

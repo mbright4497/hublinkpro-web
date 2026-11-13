@@ -71,7 +71,7 @@ export default async function ChannelPage({
   const reels = ((c.reels as string[] | null) ?? []).map(reel);
   const { data: workData } = await (await supabaseServer())
     .from("portfolio_items")
-    .select("id,title,caption,image_url,before_url")
+    .select("id,title,caption,image_url,before_url,video_url")
     .eq("channel_id", c.id)
     .order("sort_order")
     .order("id");

@@ -6,8 +6,9 @@ export type WorkItem = {
   id: number;
   title: string;
   caption: string | null;
-  image_url: string;
+  image_url: string | null;
   before_url: string | null;
+  video_url: string | null;
 };
 
 function BeforeAfter({ before, after, alt }: { before: string; after: string; alt: string }) {
@@ -77,9 +78,14 @@ export default function WorkGallery({ items, name }: { items: WorkItem[]; name: 
       <div className="workscroll">
         {items.map((w, i) => (
           <button key={w.id} type="button" className="workcard" onClick={() => setOpen(i)} aria-label={`Open ${w.title}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={w.image_url} alt="" loading="lazy" />
-            {w.before_url && <span className="workbadge">Before / After</span>}
+            {w.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={w.image_url} alt="" loading="lazy" />
+            ) : (
+              <video src={`${w.video_url}#t=0.1`} muted playsInline preload="metadata" />
+            )}
+            {w.video_url && <span className="workplay" aria-hidden="true">▶</span>}
+            {w.before_url && !w.video_url && <span className="workbadge">Before / After</span>}
             <span className="worktitle">{w.title}</span>
           </button>
         ))}
@@ -89,11 +95,13 @@ export default function WorkGallery({ items, name }: { items: WorkItem[]; name: 
         <div className="lightbox" role="dialog" aria-modal="true" aria-label={cur.title} onClick={() => setOpen(null)}>
           <div className="lbbody" onClick={(e) => e.stopPropagation()}>
             <button type="button" className="lbclose" onClick={() => setOpen(null)} aria-label="Close">✕</button>
-            {cur.before_url ? (
+            {cur.video_url ? (
+              <video key={cur.id} src={cur.video_url} className="lbvideo" controls autoPlay playsInline poster={cur.image_url ?? undefined} />
+            ) : cur.before_url && cur.image_url ? (
               <BeforeAfter key={cur.id} before={cur.before_url} after={cur.image_url} alt={cur.title} />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={cur.image_url} alt={cur.title} className="lbimg" />
+              <img src={cur.image_url ?? ""} alt={cur.title} className="lbimg" />
             )}
             <div className="lbcap">
               <strong>{cur.title}</strong>

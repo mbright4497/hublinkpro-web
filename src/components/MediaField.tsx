@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { BUCKET } from "@/lib/media";
 
-type Kind = "logo" | "hero" | "video" | "work" | "before";
+type Kind = "logo" | "hero" | "video" | "work" | "before" | "reel";
 const EXT: Record<string, string> = {
   "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp",
   "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm",
@@ -20,7 +20,7 @@ export default function MediaField({
   const [msg, setMsg] = useState("");
   const pick = useRef<HTMLInputElement>(null);
   const rec = useRef<HTMLInputElement>(null);
-  const isVideo = kind === "video";
+  const isVideo = kind === "video" || kind === "reel";
   const maxMB = isVideo ? 50 : 8;
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
