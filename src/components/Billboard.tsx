@@ -7,7 +7,7 @@ import type { HouseStage } from "@/lib/channels";
 // Full-bleed cinematic opener. Plays the house Channel video muted behind the headline.
 // A portrait clip (phone video) becomes a tall framed screen on the right instead of being
 // cropped to a blur; on phones it fills the screen. No video: brand glow, still cinematic.
-export default function Billboard({ stage }: { stage: HouseStage | null }) {
+export default function Billboard({ stage, eyebrow }: { stage: HouseStage | null; eyebrow: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [portrait, setPortrait] = useState(false);
   const [ready, setReady] = useState(false);
@@ -49,7 +49,7 @@ export default function Billboard({ stage }: { stage: HouseStage | null }) {
 
       <div className="bb-in">
         <span className="bb-eyebrow">
-          <span className="ping" /> A HubLinkPro Channel · Johnson City · Kingsport · Tri-Cities
+          <span className="ping" /> {eyebrow}
         </span>
         <h1>Meet your local pros. Book them direct.</h1>
         <p className="bb-lead">

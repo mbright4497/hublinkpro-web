@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
-import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber } from "./actions";
+import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
@@ -41,8 +41,8 @@ function missing(s: Signup) {
   return m;
 }
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string; trk?: string }> }) {
-  const { f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "" } = await searchParams;
+export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
+  const { f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
@@ -65,6 +65,14 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     .limit(50);
   const { data: codes } = await supabase.from("promo_codes").select("id,code,label,months,max_uses,uses,expires_at,active").order("id", { ascending: false });
   const { data: tracked } = await supabase.from("channels").select("slug,name,tracking_number,forward_to,missed_call_text").not("tracking_number", "is", null).order("name");
+  const [{ data: markets }, { data: mkChannels }, { data: waitlist }] = await Promise.all([
+    supabase.from("markets").select("slug,name,launched").order("display_order"),
+    supabase.from("channels").select("market_id,markets(slug)"),
+    supabase.from("market_waitlist").select("market_slug,city,zip,created_at").order("created_at", { ascending: false }).limit(500),
+  ]);
+  const MKT_MSG: Record<string, string> = {
+    saved: "Channel moved.", invalid: "Enter a Channel slug and pick a market.", noslug: "No Channel has that slug.", error: "Couldn't save. Try again.",
+  };
   const TRK_MSG: Record<string, string> = {
     saved: "Tracking number saved.", invalid: "Enter a Channel slug and a 10-digit US number.",
     taken: "That number is already assigned to another Channel.", noslug: "No Channel has that slug.", error: "Couldn't save. Try again.",
@@ -108,6 +116,43 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           </div>
         ))}
         {!(codes ?? []).length && <p className="lead" style={{ fontSize: 14 }}>No codes yet.</p>}
+
+        <h1 id="markets" style={{ marginTop: 32 }}>Markets</h1>
+        <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Each market is a metro area with its own homepage. Visitors are sent to the launched market they are in. Turn a market on only when it has Channels.</p>
+        {mkt && MKT_MSG[mkt] && <p className={`note ${mkt === "saved" ? "ok" : ""}`}>{MKT_MSG[mkt]}</p>}
+        {(markets ?? []).map((mk) => {
+          const n = (mkChannels ?? []).filter((c) => {
+            const e = c.markets as { slug: string } | { slug: string }[] | null;
+            return (Array.isArray(e) ? e[0]?.slug : e?.slug) === mk.slug;
+          }).length;
+          const w = (waitlist ?? []).filter((x) => x.market_slug === mk.slug).length;
+          return (
+            <div key={mk.slug} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
+              <div>
+                <strong>{mk.name}</strong> <span style={{ color: "var(--color-muted)", fontSize: 13 }}>/{mk.slug}</span>
+                <span className="statuspill" style={{ marginLeft: 8 }}>{mk.launched ? "launched" : "not launched"}</span><br />
+                <span style={{ fontSize: 13 }}>{n} Channel{n === 1 ? "" : "s"} · {w} on the waitlist</span>
+              </div>
+              <form action={setMarketLaunched}>
+                <input type="hidden" name="slug" value={mk.slug} />
+                <input type="hidden" name="launched" value={mk.launched ? "0" : "1"} />
+                <button className="btn-ghost" type="submit">{mk.launched ? "Turn off" : "Launch"}</button>
+              </form>
+            </div>
+          );
+        })}
+        <form action={assignChannelMarket} className="autocard" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", margin: "12px 0" }}>
+          <div className="field"><label htmlFor="m-slug">Move a Channel (slug)</label><input id="m-slug" name="slug" maxLength={80} /></div>
+          <div className="field"><label htmlFor="m-mkt">To market</label>
+            <select id="m-mkt" name="market">{(markets ?? []).map((mk) => <option key={mk.slug} value={mk.slug}>{mk.name}</option>)}</select>
+          </div>
+          <div style={{ display: "flex", alignItems: "end", marginBottom: 14 }}><button className="btn-primary" type="submit">Move</button></div>
+        </form>
+        {(waitlist ?? []).length > 0 && (
+          <p className="lead" style={{ fontSize: 13 }}>
+            Waitlist by ZIP: {Object.entries((waitlist ?? []).reduce<Record<string, number>>((acc, x) => { const k = x.zip ?? "no zip"; acc[k] = (acc[k] ?? 0) + 1; return acc; }, {})).map(([z, c]) => `${z} (${c})`).join(" · ")}
+          </p>
+        )}
 
         <h1 id="tracking" style={{ marginTop: 32 }}>Tracking numbers</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Assign a Twilio number you bought to a Channel by its slug. Leave the number blank to remove it. The owner sets which phone it rings.</p>
