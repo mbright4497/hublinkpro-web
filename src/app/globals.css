@@ -384,6 +384,10 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .workitem { border: 1px solid var(--color-line); border-radius: 12px; overflow: hidden; background: var(--color-card); }
 .workitem img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
 .workmeta { padding: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; font-size: 14px; }
+.worktabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.worktabs button { flex: 1 1 0; min-width: 96px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--color-line); background: transparent; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.worktabs button.on { background: var(--color-brand, #2563eb); border-color: transparent; color: #fff; }
+.worktabhint { margin: 0 0 14px; font-size: 13px; opacity: .75; }
 .workadd { border: 1px solid var(--color-line); border-radius: 14px; padding: 18px; background: var(--color-ink2); }
 .uplprev.work img, .uplprev.before img { aspect-ratio: 4 / 3; object-fit: cover; max-height: 220px; }
 .workcard video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
