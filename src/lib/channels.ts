@@ -53,10 +53,13 @@ function toBusiness(r: Row): Business {
 }
 
 // Newest first. Returns [] on any failure so the homepage degrades to its empty states.
-export async function liveChannels(): Promise<Business[]> {
+export async function liveChannels(marketSlug?: string): Promise<Business[]> {
   try {
+    // With a market, an inner join on markets keeps only that market's Channels.
+    const filter = marketSlug && /^[a-z0-9-]{2,40}$/.test(marketSlug) ? `&markets.slug=eq.${marketSlug}` : "";
+    const join = filter ? ",markets!inner(slug)" : "";
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/channels?status=eq.live&select=id,slug,name,tagline,logo_url,hero_image_url,city,is_food_truck,tier,networks(slug,name)&order=created_at.desc`,
+      `${SUPABASE_URL}/rest/v1/channels?status=eq.live&select=id,slug,name,tagline,logo_url,hero_image_url,city,is_food_truck,tier,networks(slug,name)${join}&order=created_at.desc${filter}`,
       { headers: { apikey: SUPABASE_KEY }, next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return [];
@@ -67,8 +70,8 @@ export async function liveChannels(): Promise<Business[]> {
 }
 
 // Local pros only. The house Channel is the product demo and never takes a row slot.
-export async function localChannels(): Promise<Business[]> {
-  return (await liveChannels()).filter((b) => !b.house);
+export async function localChannels(marketSlug?: string): Promise<Business[]> {
+  return (await liveChannels(marketSlug)).filter((b) => !b.house);
 }
 
 export async function liveHouseChannel(): Promise<Business | undefined> {
