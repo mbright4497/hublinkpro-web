@@ -13,8 +13,8 @@ const EXT: Record<string, string> = {
 // Uploads straight from the owner's phone to our storage (their own folder only),
 // then keeps the public address in a hidden input for the form to save.
 export default function MediaField({
-  name, kind, userId, initial, label, help,
-}: { name: string; kind: Kind; userId: string; initial?: string | null; label: string; help?: string }) {
+  name, kind, userId, initial, label, help, savedBy = "Save draft",
+}: { name: string; kind: Kind; userId: string; initial?: string | null; label: string; help?: string; savedBy?: string }) {
   const [url, setUrl] = useState(initial ?? "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -45,7 +45,7 @@ export default function MediaField({
       setMsg("Upload failed. Check your connection and try again.");
     } else {
       setUrl(sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
-      setMsg("Uploaded. Press Save draft to keep it.");
+      setMsg(`Uploaded. Now press ${savedBy} to keep it.`);
     }
     setBusy(false);
   }
@@ -74,7 +74,7 @@ export default function MediaField({
           {busy ? "Uploading…" : url ? "Replace" : isVideo ? "Upload video" : "Upload photo"}
         </button>
         {url && !busy && (
-          <button type="button" className="btn-ghost" onClick={() => { setUrl(""); setMsg("Removed. Press Save draft."); }}>
+          <button type="button" className="btn-ghost" onClick={() => { setUrl(""); setMsg(`Removed. Press ${savedBy} to apply.`); }}>
             Remove
           </button>
         )}
