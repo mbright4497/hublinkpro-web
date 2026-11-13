@@ -80,7 +80,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         {codeMsg === "short" && <p className="note">Codes need at least 4 characters.</p>}
         {codeMsg === "error" && <p className="note">Couldn&apos;t create the code. Try again.</p>}
         <form action={createCode} className="autocard" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", marginBottom: 12 }}>
-          <div className="field"><label htmlFor="c-label">Who it&apos;s for</label><input id="c-label" name="label" maxLength={120} placeholder="Joe, Reliable Paving" /></div>
+          <div className="field"><label htmlFor="c-label">Who it&apos;s for</label><input id="c-label" name="label" maxLength={120} placeholder="Name or business" /></div>
           <div className="field"><label htmlFor="c-code">Code (blank = random)</label><input id="c-code" name="code" maxLength={40} placeholder="FOUNDER" style={{ textTransform: "uppercase" }} /></div>
           <div className="field"><label htmlFor="c-months">Free months</label><input id="c-months" name="months" type="number" min={1} max={60} defaultValue={12} /></div>
           <div className="field"><label htmlFor="c-max">Max uses</label><input id="c-max" name="max_uses" type="number" min={1} max={1000} defaultValue={10} /></div>
