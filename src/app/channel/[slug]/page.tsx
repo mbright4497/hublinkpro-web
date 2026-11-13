@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
 import { SOCIALS, reel } from "@/lib/media";
-import { youtubeVideoEmbed, youtubeChannelEmbed, facebookFeedEmbed } from "@/lib/youtube";
+import { youtubeVideoEmbed, youtubeChannelEmbed } from "@/lib/youtube";
 import { requestBooking } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -65,8 +65,6 @@ export default async function ChannelPage({
     !c.video_file_url && !embed && ytLink
       ? (youtubeVideoEmbed(ytLink)?.embed ?? (await youtubeChannelEmbed(ytLink)))
       : null;
-  const fbLink = (c.social_links as Record<string, string> | null)?.facebook ?? null;
-  const fbFeed = facebookFeedEmbed(fbLink);
   const socials = SOCIALS.filter((sc) => (c.social_links as Record<string, string>)?.[sc.key]);
   const reels = ((c.reels as string[] | null) ?? []).map(reel);
 
@@ -153,24 +151,6 @@ export default async function ChannelPage({
               style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
             />
           </div>
-        )}
-
-        {fbFeed && fbLink && (
-          <section className="fbfeed" aria-label={`${c.name} on Facebook`}>
-            <h2 style={{ fontSize: 20, marginTop: 8 }}>Latest on Facebook</h2>
-            <iframe
-              src={fbFeed}
-              title={`${c.name} on Facebook`}
-              width="340"
-              height="520"
-              loading="lazy"
-              allow="encrypted-media"
-              style={{ border: 0, overflow: "hidden", maxWidth: "100%", borderRadius: 12, background: "#fff" }}
-            />
-            <p>
-              <a href={fbLink} target="_blank" rel="noopener noreferrer" className="btn-ghost">Open on Facebook →</a>
-            </p>
-          </section>
         )}
 
         {reels.length > 0 && (
