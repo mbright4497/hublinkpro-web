@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode } from "./actions";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
 import ShareChannel from "@/components/ShareChannel";
@@ -65,6 +65,19 @@ export default async function Dashboard({
     limit: "Free Channels can show 3 jobs. Remove one, or upgrade to show more.",
     error: "Something went wrong. Try again.",
   };
+  const CODE_MSG: Record<string, string> = {
+    ok: "Code accepted. Pro features are now unlocked on your Channel.",
+    empty: "Type your code first.",
+    invalid: "That code isn't valid or has expired. Check the spelling.",
+    used_up: "That code has been fully used.",
+    already: "You've already used that code.",
+    already_pro: "Your Channel already has Pro.",
+    no_channel: "Create your Channel first, then enter the code.",
+    throttled: "Too many tries. Wait an hour and try again.",
+    login: "Please sign in again.",
+    error: "Something went wrong. Try again.",
+  };
+  const proThrough = ch?.pro_until ? new Date(ch.pro_until).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "long", day: "numeric", year: "numeric" }) : null;
   const editable = !ch || ch.status !== "pending";
 
   return (
@@ -155,6 +168,29 @@ export default async function Dashboard({
                   </form>
                 </div>
               ))
+            )}
+          </section>
+        )}
+
+        {ch && (
+          <section id="plan" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Your plan</h2>
+            {sp.code && CODE_MSG[sp.code] && (
+              <p className={`note ${sp.code === "ok" ? "ok" : ""}`}>{CODE_MSG[sp.code]}</p>
+            )}
+            {ch.tier === "pro" ? (
+              <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>
+                <span className="statuspill">Pro</span>{" "}
+                {proThrough ? `Founding member. Pro features are free through ${proThrough}.` : "All Pro features are on."}
+              </p>
+            ) : (
+              <>
+                <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Free plan. Got a founding-member code? Enter it to unlock Pro.</p>
+                <form action={redeemCode} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input name="code" placeholder="Your code" autoCapitalize="characters" autoComplete="off" maxLength={40} aria-label="Founding-member code" style={{ flex: "1 1 180px", background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "10px 12px", textTransform: "uppercase" }} />
+                  <button className="btn-primary" type="submit">Apply code</button>
+                </form>
+              </>
             )}
           </section>
         )}
