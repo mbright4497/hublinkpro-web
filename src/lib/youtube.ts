@@ -61,3 +61,20 @@ export async function youtubeChannelEmbed(raw: string | null | undefined): Promi
   }
   return channelId ? `https://www.youtube.com/embed/videoseries?list=UU${channelId.slice(2)}` : null;
 }
+
+// Facebook Page Plugin: a small live feed of a public Page's posts. Works for Pages only
+// (not personal profiles), so the Channel page always shows an "Open on Facebook" link beside it.
+export function facebookFeedEmbed(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  try {
+    const u = new URL(raw);
+    if (!/(^|\.)facebook\.com$/i.test(u.hostname)) return null;
+    // Skip links that are not a Page (profile ids, share links, groups, posts).
+    if (/^\/(profile\.php|share|groups|permalink|story\.php|watch|reel)/i.test(u.pathname)) return null;
+    if (u.pathname.replace(/\//g, "") === "") return null;
+    const href = `https://www.facebook.com${u.pathname.replace(/\/$/, "")}`;
+    return `https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(href)}&tabs=timeline&width=340&height=520&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=false`;
+  } catch {
+    return null;
+  }
+}
