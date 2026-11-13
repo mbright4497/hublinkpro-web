@@ -33,7 +33,10 @@ export async function POST(req: Request) {
     .upsert({ channel_id: ch.id, call_sid: params.CallSid, from_number: params.From ?? null }, { onConflict: "call_sid", ignoreDuplicates: true });
   if (error) console.error("[HLP-TWILIO] voice: could not log call", error.message); // still ring the phone
 
+  // Present the forwarded call as coming from the tracking number (a number we own, so carriers trust it).
+  // Passing the visitor's number through gets filtered as spoofed by many carriers (Twilio logged "Busy" at 0 sec).
+  // The visitor's number is still in call_logs and the dashboard.
   return twiml(
-    `<Dial timeout="20" action="${SITE_BASE}/api/twilio/status"><Number>${xmlEscape(ch.forward_to)}</Number></Dial>`
+    `<Dial timeout="20" callerId="${xmlEscape(params.To ?? "")}" action="${SITE_BASE}/api/twilio/status"><Number>${xmlEscape(ch.forward_to)}</Number></Dial>`
   );
 }
