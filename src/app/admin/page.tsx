@@ -79,13 +79,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         {codeMsg === "dup" && <p className="note">That code already exists. Pick another.</p>}
         {codeMsg === "short" && <p className="note">Codes need at least 4 characters.</p>}
         {codeMsg === "error" && <p className="note">Couldn&apos;t create the code. Try again.</p>}
-        <form action={createCode} className="autocard" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", marginBottom: 12 }}>
-          <label>Who it&apos;s for<input name="label" maxLength={120} placeholder="Joe, Reliable Paving" /></label>
-          <label>Code (blank = random)<input name="code" maxLength={40} placeholder="FOUNDER" style={{ textTransform: "uppercase" }} /></label>
-          <label>Free months<input name="months" type="number" min={1} max={60} defaultValue={12} /></label>
-          <label>Max uses<input name="max_uses" type="number" min={1} max={1000} defaultValue={10} /></label>
-          <label>Code expires (optional)<input name="expires" type="date" /></label>
-          <div style={{ display: "flex", alignItems: "end" }}><button className="btn-primary" type="submit">Create code</button></div>
+        <form action={createCode} className="autocard" style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", marginBottom: 12 }}>
+          <div className="field"><label htmlFor="c-label">Who it&apos;s for</label><input id="c-label" name="label" maxLength={120} placeholder="Joe, Reliable Paving" /></div>
+          <div className="field"><label htmlFor="c-code">Code (blank = random)</label><input id="c-code" name="code" maxLength={40} placeholder="FOUNDER" style={{ textTransform: "uppercase" }} /></div>
+          <div className="field"><label htmlFor="c-months">Free months</label><input id="c-months" name="months" type="number" min={1} max={60} defaultValue={12} /></div>
+          <div className="field"><label htmlFor="c-max">Max uses</label><input id="c-max" name="max_uses" type="number" min={1} max={1000} defaultValue={10} /></div>
+          <div className="field"><label htmlFor="c-exp">Code expires (optional)</label><input id="c-exp" name="expires" type="date" /></div>
+          <div style={{ display: "flex", alignItems: "end", marginBottom: 14 }}><button className="btn-primary" type="submit">Create code</button></div>
         </form>
         {(codes ?? []).map((cd) => (
           <div key={cd.id} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", opacity: cd.active ? 1 : 0.55 }}>
