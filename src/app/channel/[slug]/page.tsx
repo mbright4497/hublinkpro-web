@@ -9,6 +9,7 @@ import WorkGallery, { type WorkItem } from "@/components/WorkGallery";
 import BookTime from "@/components/BookTime";
 import { addDays, dayKey } from "@/lib/booking";
 import { requestBooking } from "./actions";
+import { SITE_URL, jsonLd } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -42,8 +43,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${c.name} | HubLinkPro`,
     description: c.tagline ?? undefined,
+    alternates: { canonical: `/channel/${c.slug}` },
     openGraph: {
       title: c.name,
+      url: `/channel/${c.slug}`,
+      type: "website",
       description: c.tagline ?? undefined,
       images: c.hero_image_url ?? c.logo_url ? [c.hero_image_url ?? c.logo_url] : undefined,
     },
@@ -81,6 +85,27 @@ export default async function ChannelPage({
   const shareUrl = `https://hublinkpro.com/channel/${c.slug}`;
   const isLive = c.status === "live";
 
+  // Structured data from real fields only: nothing here is invented.
+  const sameAs = Object.values((c.social_links as Record<string, string> | null) ?? {}).filter(
+    (v) => typeof v === "string" && /^https?:\/\//.test(v),
+  );
+  const schema = isLive
+    ? {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "@id": `${SITE_URL}/channel/${c.slug}#business`,
+        name: c.name,
+        url: `${SITE_URL}/channel/${c.slug}`,
+        ...(c.tagline ? { description: c.tagline } : {}),
+        ...(c.logo_url ? { logo: c.logo_url } : {}),
+        ...((c.hero_image_url ?? c.logo_url) ? { image: c.hero_image_url ?? c.logo_url } : {}),
+        ...(c.phone ? { telephone: c.phone } : {}),
+        ...(c.city ? { address: { "@type": "PostalAddress", addressLocality: c.city, addressRegion: "TN", addressCountry: "US" } } : {}),
+        ...(c.zip_codes?.length ? { areaServed: c.zip_codes.map((z: string) => ({ "@type": "PostalCode", name: z })) } : {}),
+        ...(sameAs.length ? { sameAs } : {}),
+      }
+    : null;
+
   // Native booking: open slots for the next few weeks, grouped by the business's local day.
   const bookable = isLive && c.booking_enabled === true;
   const tz: string = c.booking_timezone ?? "America/New_York";
@@ -102,6 +127,7 @@ export default async function ChannelPage({
 
   return (
     <>
+      {schema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />}
       <nav className="nav">
         <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
         <Link href="/" className="navlinks" style={{ color: "var(--color-mist)" }}>← Back to discover</Link>
