@@ -19,9 +19,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const n = getNetworkBySlug(slug);
   if (!n) return { title: "HubLinkPro" };
+  // Empty category pages are thin content: keep them out of search until a Channel is live.
+  const hasListings = (await localChannels()).some((b) => b.networkId === n.id);
   return {
     title: `${n.name} — HubLinkPro`,
     description: `${n.name} in the Tri-Cities. Founding listings are open.`,
+    alternates: { canonical: `/network/${n.slug}` },
+    robots: hasListings ? undefined : { index: false, follow: true },
   };
 }
 
