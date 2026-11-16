@@ -380,11 +380,18 @@ export default async function Dashboard({
                   </div>
                 </div>
               ))}
+              {!workFull && (
+                <a href="#add-work" className="workitem nextadd">
+                  <span className="plus" aria-hidden="true">＋</span>
+                  <strong>Add video or photo</strong>
+                  <small>Next up on your Channel</small>
+                </a>
+              )}
             </div>
             {workFull ? (
               <p className="lead" style={{ fontSize: 14 }}>You&apos;ve used all {workLimit} free spots. Remove one to add another.</p>
             ) : (
-              <WorkAddForm action={addPortfolioItem} userId={user.id} />
+              <div id="add-work"><WorkAddForm action={addPortfolioItem} userId={user.id} /></div>
             )}
           </section>
         )}
