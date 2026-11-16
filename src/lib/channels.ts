@@ -86,18 +86,19 @@ export type HouseStage = {
   videoFile: string | null;
   videoEmbed: string | null;
   poster: string | null;
+  logoUrl: string | null;
 };
 
 export async function houseStage(): Promise<HouseStage | null> {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/channels?status=eq.live&slug=eq.${HOUSE_SLUG}&select=slug,name,tagline,video_file_url,video_url,hero_image_url&limit=1`,
+      `${SUPABASE_URL}/rest/v1/channels?status=eq.live&slug=eq.${HOUSE_SLUG}&select=slug,name,tagline,video_file_url,video_url,hero_image_url,logo_url&limit=1`,
       { headers: { apikey: SUPABASE_KEY }, next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return null;
     const [c] = (await res.json()) as {
       slug: string; name: string; tagline: string | null;
-      video_file_url: string | null; video_url: string | null; hero_image_url: string | null;
+      video_file_url: string | null; video_url: string | null; hero_image_url: string | null; logo_url: string | null;
     }[];
     if (!c) return null;
     return {
@@ -107,6 +108,7 @@ export async function houseStage(): Promise<HouseStage | null> {
       videoFile: c.video_file_url,
       videoEmbed: c.video_file_url ? null : (youtubeVideoEmbed(c.video_url)?.embed ?? null),
       poster: c.hero_image_url,
+      logoUrl: c.logo_url,
     };
   } catch {
     return null;
