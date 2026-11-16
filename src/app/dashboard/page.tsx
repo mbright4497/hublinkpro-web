@@ -415,7 +415,7 @@ export default async function Dashboard({
             <h2 className="dsec">Your look</h2>
             <MediaField name="logo_url" kind="logo" userId={user.id} initial={ch?.logo_url} label="Logo" help="A square photo works best." />
             <MediaField name="hero_image_url" kind="hero" userId={user.id} initial={ch?.hero_image_url} label="Cover photo" help="A wide photo of your best work or your crew." />
-            <AccentPicker initial={ch?.accent_color ?? null} paid={isPaidTier(ch?.tier)} />
+            <AccentPicker initial={ch?.accent_color ?? null} paid={isPaidTier(ch?.tier)} slug={ch?.slug} />
 
             <h2 className="dsec">The basics</h2>
             <div className="field">
