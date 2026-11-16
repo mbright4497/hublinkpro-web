@@ -10,6 +10,9 @@ export const SITE_SOCIALS: { label: string; url: string }[] = [
 // Canonical origin for sitemap, canonical tags and structured data.
 export const SITE_URL = "https://hublinkpro.com";
 
+// Public GA4 Measurement ID (not a secret) for the hublinkpro.com web stream.
+export const GA_MEASUREMENT_ID = "G-XT1P5E74SD";
+
 // Serialize JSON-LD safely for a <script> tag (no stray "</script>" or "<!--").
 export function jsonLd(data: unknown): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
