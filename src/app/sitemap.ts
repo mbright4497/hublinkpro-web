@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/list-your-business`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/food-trucks`, changeFrequency: "hourly", priority: 0.7 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.3 },
     ...NETWORKS.filter((n) => activeNetworks.has(n.id)).map((n) => ({
       url: `${SITE_URL}/network/${n.slug}`,

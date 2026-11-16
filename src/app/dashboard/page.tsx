@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, truckGoLive, truckGoOffline } from "./actions";
 import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
 import ShareChannel from "@/components/ShareChannel";
+import TruckLiveCard from "@/components/TruckLiveCard";
 import { SOCIALS } from "@/lib/media";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ const ERRORS: Record<string, string> = {
   social: "One of your social links isn't a web address for that site (for example, the Facebook box needs a facebook.com link).",
   reel: "One of your reels isn't a link from TikTok, Instagram, Facebook, YouTube, or Vimeo.",
   save: "We couldn't save that. Try again.",
+  location: "We couldn't read your location. Allow location access and try again.",
   notfound: "We couldn't find that Channel.",
 };
 const STATUS_TEXT: Record<string, string> = {
@@ -49,6 +51,9 @@ export default async function Dashboard({
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [] };
+  const { data: truckRow } = ch?.is_food_truck
+    ? await supabase.from("truck_locations").select("live_until,note").eq("channel_id", ch.id).maybeSingle()
+    : { data: null };
   const [{ data: rules }, { data: upcoming }] = ch
     ? await Promise.all([
         supabase.from("availability_rules").select("weekday,start_time,end_time").eq("channel_id", ch.id),
@@ -347,6 +352,12 @@ export default async function Dashboard({
                 </form>
               </>
             )}
+          </section>
+        )}
+
+        {ch?.is_food_truck && (
+          <section style={{ margin: "8px 0 28px" }}>
+            <TruckLiveCard goLive={truckGoLive} goOffline={truckGoOffline} liveUntil={truckRow?.live_until ?? null} note={truckRow?.note ?? null} />
           </section>
         )}
 
