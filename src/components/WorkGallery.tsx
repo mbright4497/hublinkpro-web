@@ -53,7 +53,7 @@ function BeforeAfter({ before, after, alt }: { before: string; after: string; al
   );
 }
 
-export default function WorkGallery({ items, name }: { items: WorkItem[]; name: string }) {
+export default function WorkGallery({ items, name, heading = "Our work" }: { items: WorkItem[]; name: string; heading?: string }) {
   const [open, setOpen] = useState<number | null>(null);
   const cur = open !== null ? items[open] : null;
 
@@ -74,7 +74,7 @@ export default function WorkGallery({ items, name }: { items: WorkItem[]; name: 
 
   return (
     <section className="workrow" aria-label={`${name} recent work`}>
-      <h2 style={{ fontSize: 20, marginTop: 8 }}>Our work</h2>
+      <h2 style={{ fontSize: 20, marginTop: 8 }}>{heading}</h2>
       <div className="workscroll">
         {items.map((w, i) => (
           <button key={w.id} type="button" className="workcard" onClick={() => setOpen(i)} aria-label={`Open ${w.title}`}>
@@ -86,7 +86,7 @@ export default function WorkGallery({ items, name }: { items: WorkItem[]; name: 
             )}
             {w.video_url && <span className="workplay" aria-hidden="true">▶</span>}
             {w.before_url && !w.video_url && <span className="workbadge">Before / After</span>}
-            <span className="worktitle">{w.title}</span>
+            <span className="worktitle">{w.title}{w.caption && <span className="workcap">{w.caption}</span>}</span>
           </button>
         ))}
       </div>
