@@ -40,15 +40,22 @@ function embedUrl(raw: string | null): string | null {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const c = await load((await params).slug);
   if (!c) return { title: "HubLinkPro" };
+  const net = Array.isArray(c.networks) ? c.networks[0] : c.networks;
+  const where = [net?.name, c.city].filter(Boolean);
+  const heading =
+    net?.name && c.city ? `${c.name} — ${net.name} in ${c.city}` : where.length ? `${c.name} — ${where.join(", ")}` : c.name;
+  const description =
+    c.tagline ??
+    (net?.name && c.city ? `${c.name} is a local ${net.name.toLowerCase()} pro serving ${c.city}. See their work and book direct on HubLinkPro.` : undefined);
   return {
-    title: `${c.name} | HubLinkPro`,
-    description: c.tagline ?? undefined,
+    title: `${heading} | HubLinkPro`,
+    description,
     alternates: { canonical: `/channel/${c.slug}` },
     openGraph: {
-      title: c.name,
+      title: heading,
       url: `/channel/${c.slug}`,
       type: "website",
-      description: c.tagline ?? undefined,
+      description,
       images: c.hero_image_url ?? c.logo_url ? [c.hero_image_url ?? c.logo_url] : undefined,
     },
     robots: c.status === "live" ? undefined : { index: false },
