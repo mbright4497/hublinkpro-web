@@ -390,6 +390,10 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 /* Dashboard "Your work" */
 .workgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 12px 0 18px; }
 .workitem { border: 1px solid var(--color-line); border-radius: 12px; overflow: hidden; background: var(--color-card); }
+.workitem.nextadd { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 190px; padding: 12px; text-align: center; border-style: dashed; border-color: var(--color-accent, #f08a3c); color: #fff; text-decoration: none; background: linear-gradient(160deg, var(--color-card), #0b1d3a); }
+.workitem.nextadd:hover, .workitem.nextadd:focus-visible { transform: scale(1.02); }
+.workitem.nextadd .plus { font-size: 32px; line-height: 1; }
+.workitem.nextadd small { opacity: .8; }
 .workitem img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
 .workmeta { padding: 10px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; font-size: 14px; }
 .worktabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
