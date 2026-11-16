@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { accentStyle } from "@/lib/accent";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -143,7 +144,7 @@ export default async function ChannelPage({
         <Link href="/" className="navlinks" style={{ color: "var(--color-mist)" }}>← Back to discover</Link>
         <Link href="/dashboard" className="listbtn">Build your Channel</Link>
       </nav>
-      <div className="page" style={{ maxWidth: 860 }}>
+      <div className="page" style={{ maxWidth: 860, ...accentStyle(c.accent_color, c.tier) }}>
         {c.status !== "live" && (
           <p className="note">Preview — this Channel isn&apos;t public yet ({c.status}).</p>
         )}

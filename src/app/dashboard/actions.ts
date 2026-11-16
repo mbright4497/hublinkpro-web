@@ -7,6 +7,7 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
 import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
 import { toE164 } from "@/lib/twilio";
+import { isHex, accentReadable } from "@/lib/accent";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -85,6 +86,9 @@ export async function saveChannel(formData: FormData) {
     zip_codes: list(formData.get("zip_codes")).filter((z) => /^\d{5}$/.test(z)),
     is_food_truck: formData.get("is_food_truck") === "on",
   };
+  // Accent color: only saved when it is a readable color. The database also refuses it on free Channels.
+  const accentRaw = String(formData.get("accent_color") ?? "").trim();
+  const accentField = formData.has("accent_color") ? { accent_color: isHex(accentRaw) && accentReadable(accentRaw) ? accentRaw : null } : {};
 
   let current: { id: number; status: string; sms_consent: boolean } | null = null;
   if (id) {
@@ -105,14 +109,14 @@ export async function saveChannel(formData: FormData) {
   if (current) {
     const { error } = await supabase
       .from("channels")
-      .update({ ...fields, ...consentFields, ...(status ? { status } : {}) })
+      .update({ ...fields, ...accentField, ...consentFields, ...(status ? { status } : {}) })
       .eq("id", current.id);
     if (error) redirect("/dashboard?error=save");
   } else {
     const slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 6)}`;
     const { error } = await supabase
       .from("channels")
-      .insert({ ...fields, ...consentFields, owner_id: user.id, slug, status: status ?? "draft" });
+      .insert({ ...fields, ...accentField, ...consentFields, owner_id: user.id, slug, status: status ?? "draft" });
     if (error) redirect("/dashboard?error=save");
   }
 
