@@ -53,8 +53,11 @@ function BeforeAfter({ before, after, alt }: { before: string; after: string; al
   );
 }
 
-export default function WorkGallery({ items, name, heading = "Our work" }: { items: WorkItem[]; name: string; heading?: string }) {
+export default function WorkGallery({ items: all, name, heading = "Our work" }: { items: WorkItem[]; name: string; heading?: string }) {
   const [open, setOpen] = useState<number | null>(null);
+  // A card with no media is a "coming soon" holding place: shown in the row, never opened.
+  const hasMedia = (w: WorkItem) => !!(w.image_url || w.video_url);
+  const items = all.filter(hasMedia);
   const cur = open !== null ? items[open] : null;
 
   useEffect(() => {
@@ -70,14 +73,20 @@ export default function WorkGallery({ items, name, heading = "Our work" }: { ite
     return () => { document.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
   }, [open, items.length]);
 
-  if (items.length === 0) return null;
+  if (all.length === 0) return null;
 
   return (
     <section className="workrow" aria-label={`${name} recent work`}>
       <h2 style={{ fontSize: 20, marginTop: 8 }}>{heading}</h2>
       <div className="workscroll">
-        {items.map((w, i) => (
-          <button key={w.id} type="button" className="workcard" onClick={() => setOpen(i)} aria-label={`Open ${w.title}`}>
+        {all.map((w) =>
+          !hasMedia(w) ? (
+            <div key={w.id} className="workcard soon" aria-label={`${w.title}, coming soon`}>
+              <span className="workbadge">Coming soon</span>
+              <span className="worktitle">{w.title}{w.caption && <span className="workcap">{w.caption}</span>}</span>
+            </div>
+          ) : (
+          <button key={w.id} type="button" className="workcard" onClick={() => setOpen(items.indexOf(w))} aria-label={`Open ${w.title}`}>
             {w.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={w.image_url} alt="" loading="lazy" />
@@ -88,7 +97,8 @@ export default function WorkGallery({ items, name, heading = "Our work" }: { ite
             {w.before_url && !w.video_url && <span className="workbadge">Before / After</span>}
             <span className="worktitle">{w.title}{w.caption && <span className="workcap">{w.caption}</span>}</span>
           </button>
-        ))}
+          ),
+        )}
       </div>
 
       {cur && (
