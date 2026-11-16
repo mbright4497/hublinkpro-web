@@ -133,6 +133,8 @@ export async function saveChannel(formData: FormData) {
     }).catch((e) => console.error("[HLP-INTAKE] webhook error", String(e)));
   }
 
+  revalidatePath("/"); // the homepage poster shows this Channel's logo
+  revalidatePath("/channel", "layout");
   redirect(status === "pending" ? "/dashboard?submitted=1" : "/dashboard?saved=1");
 }
 
@@ -172,7 +174,6 @@ export async function addPortfolioItem(formData: FormData) {
     .insert({ channel_id: ch.id, title, caption, image_url: image, before_url: before, video_url: video });
   if (error) redirect(`/dashboard?work=${error.message.includes("portfolio_limit") ? "limit" : "error"}#work`);
   revalidatePath(`/channel/${ch.slug}`);
-  revalidatePath("/"); // the homepage poster shows this Channel's logo and video
   if (formData.get("return") === "channel") redirect(`/channel/${ch.slug}`);
   redirect("/dashboard?work=added#work");
 }
