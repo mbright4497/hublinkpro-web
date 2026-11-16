@@ -514,7 +514,7 @@ export default async function Dashboard({
               </span>
             </label>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 18 }}>
-              <button className="btn-ghost" type="submit" name="intent" value="save">Save draft</button>
+              <button className="btn-ghost" type="submit" name="intent" value="save">{!ch || ch.status === "draft" ? "Save draft" : "Save changes"}</button>
               {(!ch || ch.status === "draft") && (
                 <button className="btn-primary" type="submit" name="intent" value="submit">
                   Submit for review

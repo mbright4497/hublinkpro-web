@@ -30,10 +30,15 @@ export default function AccentPicker({ initial, paid, slug }: { initial: string 
           <span style={{ display: "inline-block", background: hex, color: "#111", fontWeight: 800, padding: "8px 16px", borderRadius: 10, fontSize: 14 }}>Your buttons</span>
         </div>
       )}
-      {paid && ok && (
-        <p className="hint">
-          Save to apply it.{slug ? <> Then <a href={`/channel/${slug}`} style={{ textDecoration: "underline" }}>view your Channel</a> to see it live.</> : null}
-        </p>
+      {paid && (ok || (hex === "" && !!initial)) && (
+        <>
+          <p style={{ marginTop: 12 }}>
+            <button type="submit" name="intent" value="save" className="btn-primary">
+              {ok ? "Save color" : "Save (back to the default color)"}
+            </button>
+          </p>
+          {slug && <p className="hint">Then <a href={`/channel/${slug}`} style={{ textDecoration: "underline" }}>view your Channel</a> to see it live.</p>}
+        </>
       )}
     </div>
   );
