@@ -320,9 +320,10 @@ export default async function ChannelPage({
           <section className="sharebox" aria-label="Share this Channel">
             <div>
               <h2 style={{ fontSize: 20, margin: "0 0 6px" }}>Share {c.name}</h2>
-              <p style={{ color: "var(--color-mist)", margin: "0 0 14px" }}>Send this Channel to a neighbor, or print the QR code for a truck window, yard sign, or business card.</p>
+              <p style={{ color: "var(--color-mist)", margin: "0 0 14px" }}>Send this Channel to a neighbor, or save it to your contacts, or print the QR code for a truck window, yard sign, or business card.</p>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <ShareChannel url={shareUrl} name={c.name} />
+                <a href={`/channel/${c.slug}/vcard`} className="btn-ghost">👤 Save to contacts</a>
                 <a href={`/channel/${c.slug}/qr?download=1`} className="btn-ghost">⬇ Download QR</a>
               </div>
             </div>
