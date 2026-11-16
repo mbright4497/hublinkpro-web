@@ -4,6 +4,7 @@ import HowItWorks from "@/components/HowItWorks";
 import { NETWORKS, type Business } from "@/lib/data";
 import { localChannels, houseStage } from "@/lib/channels";
 import Billboard from "@/components/Billboard";
+import HouseStartCard from "@/components/HouseStartCard";
 import type { Market } from "@/lib/markets";
 import { SITE_SOCIALS } from "@/lib/site";
 
@@ -120,6 +121,7 @@ export default async function MarketHome({ market }: { market: Market }) {
 
       {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
       <PosterRow title="Browse by genre" icon="🎬" id="networks">
+        {stage && <HouseStartCard stage={stage} />}
         {NETWORKS.map((n) => (
           <Link key={n.id} href={`/network/${n.slug}`} className="poster npost" style={{ background: n.hue }} aria-label={n.name}>
             <span className="nicon" aria-hidden="true">{n.icon}</span>

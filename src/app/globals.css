@@ -331,6 +331,9 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 /* Genre (Network) posters and open founding-slot posters */
 .poster.npost { display: flex; align-items: flex-start; border-color: rgba(255,255,255,.1); }
 .poster .nicon { position: absolute; top: 22%; left: 0; right: 0; text-align: center; font-size: clamp(44px, 5vw, 64px); filter: drop-shadow(0 6px 14px rgba(0,0,0,.45)); }
+.poster.start { border: 1.5px solid rgba(251,146,60,.75); background: #0d1627; }
+.poster.start .startbg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.poster.start:hover { border-color: var(--color-brand2); }
 .poster.slot { border: 1.5px dashed rgba(251,146,60,.55); background: radial-gradient(260px 200px at 50% 28%, rgba(251,146,60,.16), transparent), #0d1627; }
 .poster.slot .nicon { color: var(--color-brand2); font-weight: 300; }
 .poster.slot .slotpill { position: absolute; top: 14px; left: 14px; right: 14px; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--color-light); }
