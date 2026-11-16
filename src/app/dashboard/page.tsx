@@ -16,6 +16,7 @@ export const metadata = { title: "Your Channel | HubLinkPro" };
 
 const ERRORS: Record<string, string> = {
   name: "Add your business name.",
+  email: "That email address doesn't look right.",
   url: "One of your links doesn't look like a web address.",
   social: "One of your social links isn't a web address for that site (for example, the Facebook box needs a facebook.com link).",
   reel: "One of your reels isn't a link from TikTok, Instagram, Facebook, YouTube, or Vimeo.",
@@ -173,6 +174,7 @@ export default async function Dashboard({
               </p>
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
                 <ShareChannel url={`https://hublinkpro.com/channel/${ch.slug}`} name={ch.name} />
+                <a href={`/channel/${ch.slug}/vcard`} className="btn-ghost">👤 Save to contacts</a>
                 <a href={`/channel/${ch.slug}/qr?download=1`} className="btn-ghost">⬇ Download QR</a>
               </div>
             </div>
@@ -479,6 +481,11 @@ export default async function Dashboard({
             <div className="field">
               <label>Phone</label>
               <input name="phone" defaultValue={ch?.phone ?? ""} />
+            </div>
+            <div className="field">
+              <label>Email on your contact card (optional)</label>
+              <input name="contact_email" type="email" maxLength={120} defaultValue={ch?.contact_email ?? ""} placeholder="you@yourbusiness.com" />
+              <p className="hint">Only added to the &quot;Save to contacts&quot; card if you fill this in. It&apos;s public to anyone who saves your card. Leave blank to keep it off.</p>
             </div>
             <div className="field">
               <label>Website</label>

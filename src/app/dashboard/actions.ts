@@ -49,6 +49,8 @@ export async function saveChannel(formData: FormData) {
   const booking_url = cleanUrl(formData.get("booking_url"));
   const video_url = cleanUrl(formData.get("video_url"));
   if ([website, booking_url, video_url].includes("invalid")) redirect("/dashboard?error=url");
+  const contactEmail = String(formData.get("contact_email") ?? "").trim().slice(0, 120);
+  if (contactEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactEmail)) redirect("/dashboard?error=email");
 
   // Social links: web addresses, each on the right platform.
   const social_links: Record<string, string> = {};
@@ -85,6 +87,7 @@ export async function saveChannel(formData: FormData) {
     city: String(formData.get("city") ?? "").trim().slice(0, 60) || null,
     zip_codes: list(formData.get("zip_codes")).filter((z) => /^\d{5}$/.test(z)),
     is_food_truck: formData.get("is_food_truck") === "on",
+    contact_email: contactEmail || null,
   };
   // Accent color: only saved when it is a readable color. The database also refuses it on free Channels.
   const accentRaw = String(formData.get("accent_color") ?? "").trim();
