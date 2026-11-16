@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { ACCENT_PRESETS, accentReadable, isHex } from "@/lib/accent";
 
-export default function AccentPicker({ initial, paid }: { initial: string | null; paid: boolean }) {
+export default function AccentPicker({ initial, paid, slug }: { initial: string | null; paid: boolean; slug?: string }) {
   const [hex, setHex] = useState(initial ?? "");
   const valid = isHex(hex);
   const ok = valid && accentReadable(hex);
@@ -24,8 +24,15 @@ export default function AccentPicker({ initial, paid }: { initial: string | null
       {paid && hex && !valid && <p className="hint" style={{ color: "#ff8a80" }}>Use a six-digit color like #2f80ed.</p>}
       {paid && valid && !ok && <p className="hint" style={{ color: "#ff8a80" }}>That color is too dark to read on the dark page. Try a lighter one.</p>}
       {paid && ok && (
-        <p style={{ marginTop: 12 }}>
-          <span style={{ display: "inline-block", background: hex, color: "#111", fontWeight: 800, padding: "10px 20px", borderRadius: 10 }}>Preview: Book a time</span>
+        <div aria-hidden="true" style={{ marginTop: 12, padding: 14, borderRadius: 12, border: "1px dashed rgba(255,255,255,.25)", pointerEvents: "none", userSelect: "none" }}>
+          <div style={{ fontSize: 11, opacity: 0.6, marginBottom: 8, letterSpacing: ".06em" }}>PREVIEW ONLY</div>
+          <div style={{ color: hex, fontWeight: 800, fontSize: 12, letterSpacing: ".05em", marginBottom: 8 }}>YOUR CATEGORY · YOUR CITY</div>
+          <span style={{ display: "inline-block", background: hex, color: "#111", fontWeight: 800, padding: "8px 16px", borderRadius: 10, fontSize: 14 }}>Your buttons</span>
+        </div>
+      )}
+      {paid && ok && (
+        <p className="hint">
+          Save to apply it.{slug ? <> Then <a href={`/channel/${slug}`} style={{ textDecoration: "underline" }}>view your Channel</a> to see it live.</> : null}
         </p>
       )}
     </div>
