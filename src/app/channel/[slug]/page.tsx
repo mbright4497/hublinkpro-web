@@ -9,6 +9,7 @@ import WorkGallery, { type WorkItem } from "@/components/WorkGallery";
 import BookTime from "@/components/BookTime";
 import { addDays, dayKey } from "@/lib/booking";
 import { requestBooking } from "./actions";
+import { addPortfolioItem } from "@/app/dashboard/actions";
 import { SITE_URL, jsonLd } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -72,6 +73,8 @@ export default async function ChannelPage({
   const sp = await searchParams;
   const c = await load((await params).slug);
   if (!c) notFound();
+  const { data: { user } } = await (await supabaseServer()).auth.getUser();
+  const isOwner = !!user && user.id === c.owner_id;
   const net = Array.isArray(c.networks) ? c.networks[0] : c.networks;
   const embed = youtubeVideoEmbed(c.video_url)?.embed ?? embedUrl(c.video_url);
   // No commercial yet? Pull from their YouTube link automatically: a video plays, a channel shows its latest uploads.
@@ -218,7 +221,7 @@ export default async function ChannelPage({
           </div>
         )}
 
-        <WorkGallery items={work} name={c.name} heading={c.slug === "hublinkpro" ? "See what HubLinkPro does" : "Our work"} nextUp={c.slug === "hublinkpro" ? "Next video coming soon" : undefined} />
+        <WorkGallery items={work} name={c.name} heading={c.slug === "hublinkpro" ? "See what HubLinkPro does" : "Our work"} nextUp={c.slug === "hublinkpro" ? "Next video coming soon" : undefined} adder={isOwner && user ? { userId: user.id, action: addPortfolioItem } : undefined} />
 
         {reels.length > 0 && (
           <>

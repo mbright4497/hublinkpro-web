@@ -172,6 +172,7 @@ export async function addPortfolioItem(formData: FormData) {
     .insert({ channel_id: ch.id, title, caption, image_url: image, before_url: before, video_url: video });
   if (error) redirect(`/dashboard?work=${error.message.includes("portfolio_limit") ? "limit" : "error"}#work`);
   revalidatePath(`/channel/${ch.slug}`);
+  if (formData.get("return") === "channel") redirect(`/channel/${ch.slug}`);
   redirect("/dashboard?work=added#work");
 }
 

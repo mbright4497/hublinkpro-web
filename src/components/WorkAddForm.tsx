@@ -13,14 +13,15 @@ const MODES: { id: Mode; label: string; hint: string }[] = [
 
 // One job at a time: pick what you're adding, upload it, name it, done.
 export default function WorkAddForm({
-  action, userId,
-}: { action: (formData: FormData) => void | Promise<void>; userId: string }) {
+  action, userId, returnTo,
+}: { action: (formData: FormData) => void | Promise<void>; userId: string; returnTo?: "channel" }) {
   const [mode, setMode] = useState<Mode>("video");
   const savedBy = "“Add to my Channel”";
   const hint = MODES.find((m) => m.id === mode)?.hint;
 
   return (
     <form action={action} className="workadd">
+      {returnTo && <input type="hidden" name="return" value={returnTo} />}
       <div className="worktabs" role="tablist" aria-label="What are you adding?">
         {MODES.map((m) => (
           <button
