@@ -218,7 +218,7 @@ export default async function ChannelPage({
           </div>
         )}
 
-        <WorkGallery items={work} name={c.name} heading={c.slug === "hublinkpro" ? "See what HubLinkPro does" : "Our work"} />
+        <WorkGallery items={work} name={c.name} heading={c.slug === "hublinkpro" ? "See what HubLinkPro does" : "Our work"} nextUp={c.slug === "hublinkpro" ? "Next video coming soon" : undefined} />
 
         {reels.length > 0 && (
           <>
