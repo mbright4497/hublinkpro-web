@@ -133,6 +133,8 @@ export async function saveChannel(formData: FormData) {
     }).catch((e) => console.error("[HLP-INTAKE] webhook error", String(e)));
   }
 
+  revalidatePath("/"); // the homepage poster shows this Channel's logo
+  revalidatePath("/channel", "layout");
   redirect(status === "pending" ? "/dashboard?submitted=1" : "/dashboard?saved=1");
 }
 
