@@ -50,7 +50,7 @@ function Nav({ market }: { market: Market }) {
       <div className="navlinks">
         <a href="#discover">Discover</a>
         <a href="#networks">Networks</a>
-        <a href="#food-trucks">Food Trucks</a>
+        <Link href="/food-trucks">Food Trucks</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/channel/hublinkpro">Your Channel</Link>
         <a href="#automations">HLP Automations</a>
@@ -73,11 +73,15 @@ function Row({
   icon,
   items,
   emergency = false,
+  seeHref = "#networks",
+  seeLabel = "See all ›",
 }: {
   title: string;
   icon: string;
   items: Business[];
   emergency?: boolean;
+  seeHref?: string;
+  seeLabel?: string;
 }) {
   if (items.length === 0) return null;
   return (
@@ -86,9 +90,9 @@ function Row({
         <h2>
           <span>{icon}</span> {title}
         </h2>
-        <a className="see" href="#networks">
-          See all ›
-        </a>
+        <Link className="see" href={seeHref}>
+          {seeLabel}
+        </Link>
       </div>
       <div className="track">
         {items.map((b) => (
@@ -122,7 +126,16 @@ export default async function MarketHome({ market }: { market: Market }) {
       {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
       <PosterRow title="Browse by genre" icon="🎬" id="networks">
         {stage && <HouseStartCard stage={stage} />}
-        {NETWORKS.map((n) => (
+        {NETWORKS.flatMap((n) => [n, ...(n.id === "food" ? [null] : [])]).map((n) => n === null ? (
+          <Link key="food-trucks" href="/food-trucks" className="poster npost" style={{ background: "linear-gradient(135deg,#b4531a,#4a1f0a)" }} aria-label="Food Trucks map">
+            <span className="nicon" aria-hidden="true">🚚</span>
+            <span className="pshade" />
+            <span className="pbody">
+              <span className="pname">Food Trucks</span>
+              <span className="pcat">Live map</span>
+            </span>
+          </Link>
+        ) : (
           <Link key={n.id} href={`/network/${n.slug}`} className="poster npost" style={{ background: n.hue }} aria-label={n.name}>
             <span className="nicon" aria-hidden="true">{n.icon}</span>
             <span className="pshade" />
@@ -143,8 +156,7 @@ export default async function MarketHome({ market }: { market: Market }) {
       {/* Real Channels. Each row hides itself until it has one. */}
       <Row title="Just Listed on HubLinkPro" icon="🆕" items={justListed} />
       {foodPick && <Row title="Eat Local Tonight" icon="🍽️" items={foodChannels} />}
-      <Row title="Food Trucks Live Today" icon="🌮" items={trucks} />
-      <div id="food-trucks" />
+      <Row title="Food Trucks Live Today" icon="🌮" items={trucks} seeHref="/food-trucks" seeLabel="🗺️ See map ›" />
       {networkRows.map(({ n, items }) => (
         <Row key={n.id} title={n.name} icon={n.icon} items={items} />
       ))}
@@ -236,7 +248,7 @@ export default async function MarketHome({ market }: { market: Market }) {
           <h4>Neighbors</h4>
           <a href="#discover">Discover local pros</a>
           <a href="#networks">Browse Networks</a>
-          <a href="#food-trucks">Food Truck Radar</a>
+          <Link href="/food-trucks">Food Truck Map</Link>
         </div>
         <div className="col">
           <h4>Businesses</h4>

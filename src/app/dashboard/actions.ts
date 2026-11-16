@@ -286,3 +286,39 @@ export async function saveCalls(formData: FormData) {
   revalidatePath("/dashboard");
   redirect("/dashboard?calls=saved#calls");
 }
+
+// Food trucks: "I'm here now" saves where the truck is for a few hours, then it disappears on its own.
+export async function truckGoLive(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase
+    .from("channels").select("id,is_food_truck").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch || !ch.is_food_truck) redirect("/dashboard?error=save");
+
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  const hours = Math.min(12, Math.max(1, Math.round(Number(formData.get("hours")) || 4)));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    redirect("/dashboard?error=location");
+  }
+  const note = String(formData.get("note") ?? "").trim().slice(0, 120) || null;
+  const { error } = await supabase.from("truck_locations").upsert(
+    { channel_id: ch.id, lat, lng, note, live_until: new Date(Date.now() + hours * 3_600_000).toISOString(), updated_at: new Date().toISOString() },
+    { onConflict: "channel_id" },
+  );
+  if (error) redirect("/dashboard?error=save");
+  revalidatePath("/food-trucks");
+  redirect("/dashboard?truck=live#truck");
+}
+
+export async function truckGoOffline() {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase
+    .from("channels").select("id").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (ch) await supabase.from("truck_locations").delete().eq("channel_id", ch.id);
+  revalidatePath("/food-trucks");
+  redirect("/dashboard?truck=off#truck");
+}
