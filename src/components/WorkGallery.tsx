@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import WorkAddForm from "@/components/WorkAddForm";
 
 export type WorkItem = {
   id: number;
@@ -58,14 +59,18 @@ export default function WorkGallery({
   name,
   heading = "Our work",
   nextUp,
+  adder,
 }: {
   items: WorkItem[];
   name: string;
   heading?: string;
   /** Optional trailing "coming soon" card, shown after the last item. Not clickable. */
   nextUp?: string;
+  /** Only passed for the Channel's owner: turns the coming-soon card into an add button. */
+  adder?: { userId: string; action: (formData: FormData) => void | Promise<void> };
 }) {
   const [open, setOpen] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
   const cur = open !== null ? items[open] : null;
 
   useEffect(() => {
@@ -100,13 +105,29 @@ export default function WorkGallery({
             <span className="worktitle">{w.title}{w.caption && <span className="workcap">{w.caption}</span>}</span>
           </button>
         ))}
-        {nextUp && (
+        {nextUp && adder && (
+          <button type="button" className="workcard soon owner" onClick={() => setAdding(true)} aria-label="Add a video or photo">
+            <span className="workbadge">Only you see this</span>
+            <span className="worktitle">＋ Add video or photo<span className="workcap">Visitors see “{nextUp}” here.</span></span>
+          </button>
+        )}
+        {nextUp && !adder && (
           <div className="workcard soon" role="group" aria-label={`${nextUp}, coming soon`}>
             <span className="workbadge">Coming soon</span>
             <span className="worktitle">{nextUp}</span>
           </div>
         )}
       </div>
+
+      {adding && adder && (
+        <div className="lightbox" role="dialog" aria-modal="true" aria-label="Add a video or photo" onClick={() => setAdding(false)}>
+          <div className="lbbody addbody" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="lbclose" onClick={() => setAdding(false)} aria-label="Close">✕</button>
+            <h3 style={{ margin: "0 0 12px" }}>Add to {name}</h3>
+            <WorkAddForm action={adder.action} userId={adder.userId} returnTo="channel" />
+          </div>
+        </div>
+      )}
 
       {cur && (
         <div className="lightbox" role="dialog" aria-modal="true" aria-label={cur.title} onClick={() => setOpen(null)}>
