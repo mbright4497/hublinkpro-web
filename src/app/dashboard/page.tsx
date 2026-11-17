@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, truckGoLive, truckGoOffline } from "./actions";
+import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, saveSos, sosArrived, sosDone, truckGoLive, truckGoOffline } from "./actions";
 import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
@@ -11,6 +11,9 @@ import { isPaidTier } from "@/lib/accent";
 import BackgroundPicker from "@/components/BackgroundPicker";
 import TruckLiveCard from "@/components/TruckLiveCard";
 import { SOCIALS } from "@/lib/media";
+import { SOS_CATEGORIES, categoryLabel } from "@/lib/sos-categories";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { answerStat } from "@/lib/sos";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Channel | HubLinkPro" };
@@ -79,6 +82,20 @@ export default async function Dashboard({
         .order("created_at", { ascending: false })
         .limit(25)
     : { data: [] };
+  const SOS_MSG: Record<string, string> = {
+    saved: "Emergency settings saved.",
+    arrived: "Marked as arrived.",
+    done: "Job marked done.",
+    pro: "Emergency jobs are a Pro feature.",
+    nophone: "Add the phone to ring (in Calls below) before going on call.",
+    nocats: "Pick at least one kind of emergency you take.",
+    error: "Something went wrong. Try again.",
+  };
+  const sosDb = ch && ch.tier === "pro" ? supabaseAdmin() : null;
+  const { data: sosJobs } = sosDb && ch
+    ? await sosDb.from("sos_requests").select("id,category,name,phone,problem,zip,status,eta_minutes,claimed_at").eq("claimed_channel_id", ch.id).in("status", ["claimed", "arrived"]).order("claimed_at", { ascending: false })
+    : { data: [] };
+  const sosStat = ch && ch.tier === "pro" ? await answerStat(ch.id) : { jobs: 0, medianMin: null };
   const CALLS_MSG: Record<string, string> = {
     saved: "Call settings saved.",
     badphone: "Enter a 10-digit US phone number.",
@@ -256,6 +273,54 @@ export default async function Dashboard({
                   </form>
                 </div>
               ))
+            )}
+          </section>
+        )}
+
+        {ch && (
+          <section id="sos" style={{ margin: "8px 0 28px" }}>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Emergency jobs (SOS)</h2>
+            {sp.sos && SOS_MSG[sp.sos] && <p className={`note ${sp.sos === "saved" ? "ok" : ""}`}>{SOS_MSG[sp.sos]}</p>}
+            {ch.tier !== "pro" ? (
+              <p className="lead" style={{ fontSize: 14 }}>Emergency jobs come with Pro. Homeowners tap one button, we call you, and if you press 1 first, the job is yours. No bidding, no cut.</p>
+            ) : (
+              <>
+              {!!sosJobs?.length && (
+                <div style={{ marginBottom: 20 }}>
+                  <h3 style={{ fontSize: 16, margin: "0 0 8px" }}>Your emergency jobs</h3>
+                  {sosJobs.map((j) => (
+                    <div key={j.id} className="bookbox" style={{ marginBottom: 10 }}>
+                      <strong>{categoryLabel(j.category)}</strong> · {j.zip} · {j.status === "arrived" ? "on site" : `promised ${j.eta_minutes} min`}
+                      <p style={{ margin: "6px 0" }}>{j.name} · <a href={`tel:${j.phone}`}>{j.phone}</a>{j.problem ? ` · ${j.problem}` : ""}</p>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        {j.status === "claimed" && <form action={sosArrived}><input type="hidden" name="id" value={j.id} /><button className="btn-ghost" type="submit">I&apos;ve arrived</button></form>}
+                        <form action={sosDone}><input type="hidden" name="id" value={j.id} /><button className="btn-primary" type="submit">Job done</button></form>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="lead" style={{ fontSize: 14 }}>
+                {sosStat.medianMin ? <>Homeowners see &quot;answers in about {sosStat.medianMin} min&quot; on your Channel. </> : <>After 5 emergency jobs your median answer time shows publicly ({sosStat.jobs} so far). </>}
+                {ch.sos_strikes ? <>No-shows on record: {ch.sos_strikes}. Two pauses emergency calls.</> : null}
+              </p>
+              <form action={saveSos}>
+                <label className="consent">
+                  <input type="checkbox" name="on_call" defaultChecked={!!ch.on_call} />
+                  <span>I&apos;m on call. Call my phone for emergencies in my area.</span>
+                </label>
+                {SOS_CATEGORIES.map((c) => (
+                  <div key={c.slug} style={{ display: "flex", gap: 10, alignItems: "center", margin: "8px 0", flexWrap: "wrap" }}>
+                    <label className="consent" style={{ margin: 0, flex: "1 1 200px" }}>
+                      <input type="checkbox" name={`cat_${c.slug}`} defaultChecked={(ch.sos_categories ?? []).includes(c.slug)} />
+                      <span>{c.label}</span>
+                    </label>
+                    <input name={`fee_${c.slug}`} placeholder="Call-out fee, e.g. $89-$149" maxLength={40} defaultValue={(ch.sos_fee_ranges as Record<string, string> | null)?.[c.slug] ?? ""} style={{ flex: "1 1 180px", background: "var(--color-ink2)", border: "1px solid var(--color-line)", borderRadius: 11, color: "#fff", padding: "10px 12px" }} />
+                  </div>
+                ))}
+                <button className="btn-primary" type="submit" style={{ marginTop: 12 }}>Save emergency settings</button>
+              </form>
+              </>
             )}
           </section>
         )}

@@ -66,3 +66,37 @@ export async function sendSms(from: string, to: string, body: string): Promise<b
     return false;
   }
 }
+
+// Start an outbound call that fetches TwiML from `url` once answered. Returns the call SID or null.
+export async function startCall(from: string, to: string, url: string, statusUrl?: string): Promise<string | null> {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  if (!sid || !token) {
+    console.warn("[HLP-TWILIO] call skipped: TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN not set");
+    return null;
+  }
+  try {
+    const body = new URLSearchParams({ From: from, To: to, Url: url, Timeout: "25" });
+    if (statusUrl) {
+      body.set("StatusCallback", statusUrl);
+      body.append("StatusCallbackEvent", "completed");
+    }
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: body.toString(),
+    });
+    if (!res.ok) {
+      console.error("[HLP-TWILIO] call failed", res.status, (await res.text()).slice(0, 300));
+      return null;
+    }
+    const j = (await res.json()) as { sid?: string };
+    return j.sid ?? null;
+  } catch (e) {
+    console.error("[HLP-TWILIO] call error", String(e));
+    return null;
+  }
+}

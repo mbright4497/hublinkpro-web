@@ -9,6 +9,8 @@ import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
 import { toE164 } from "@/lib/twilio";
 import { isHex, accentReadable } from "@/lib/accent";
 import { bgAllowed } from "@/lib/background";
+import { SOS_CATEGORIES } from "@/lib/sos-categories";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -298,6 +300,57 @@ export async function saveCalls(formData: FormData) {
   if (error) redirect("/dashboard?calls=error#calls");
   revalidatePath("/dashboard");
   redirect("/dashboard?calls=saved#calls");
+}
+
+// SOS: Pro owners turn on-call on/off and choose which emergencies they take.
+export async function saveSos(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id,tier,forward_to").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch) redirect("/dashboard");
+  if (ch.tier !== "pro") redirect("/dashboard?sos=pro#sos");
+  const onCall = formData.get("on_call") === "on";
+  if (onCall && !ch.forward_to) redirect("/dashboard?sos=nophone#sos");
+  const cats = SOS_CATEGORIES.map((c) => c.slug).filter((slug) => formData.get(`cat_${slug}`) === "on");
+  if (onCall && !cats.length) redirect("/dashboard?sos=nocats#sos");
+  const fees: Record<string, string> = {};
+  for (const slug of cats) {
+    const v = String(formData.get(`fee_${slug}`) ?? "").trim().slice(0, 40);
+    if (v) fees[slug] = v;
+  }
+  const { error } = await supabase.from("channels").update({ on_call: onCall, sos_categories: cats, sos_fee_ranges: fees }).eq("id", ch.id);
+  if (error) redirect("/dashboard?sos=error#sos");
+  revalidatePath("/dashboard");
+  redirect("/dashboard?sos=saved#sos");
+}
+
+// SOS job progress. Tables are server-only, so verify the signed-in owner owns the claim, then use the service role.
+async function ownedSosJob(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  const id = Number(formData.get("id"));
+  const db = supabaseAdmin();
+  if (!ch || !db || !Number.isInteger(id)) redirect("/dashboard#sos");
+  return { db, id, channelId: ch.id };
+}
+
+export async function sosArrived(formData: FormData) {
+  const { db, id, channelId } = await ownedSosJob(formData);
+  await db.from("sos_requests").update({ status: "arrived", arrived_at: new Date().toISOString() })
+    .eq("id", id).eq("claimed_channel_id", channelId).eq("status", "claimed");
+  revalidatePath("/dashboard");
+  redirect("/dashboard?sos=arrived#sos");
+}
+
+export async function sosDone(formData: FormData) {
+  const { db, id, channelId } = await ownedSosJob(formData);
+  await db.from("sos_requests").update({ status: "done", done_at: new Date().toISOString() })
+    .eq("id", id).eq("claimed_channel_id", channelId).in("status", ["claimed", "arrived"]);
+  revalidatePath("/dashboard");
+  redirect("/dashboard?sos=done#sos");
 }
 
 // Food trucks: "I'm here now" saves where the truck is for a few hours, then it disappears on its own.
