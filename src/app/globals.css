@@ -438,7 +438,13 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .chatform button { padding: 11px 18px; }
 
 /* HLP SOS: emergency entry point (nav button) */
-.sosbtn { background: #dc2626; color: #fff; font-weight: 800; padding: 10px 16px; border-radius: 10px; font-size: 14px; white-space: nowrap; }
+.sosbtn { margin-right: 12px; background: #dc2626; color: #fff; font-weight: 800; padding: 10px 16px; border-radius: 10px; font-size: 14px; white-space: nowrap; }
 .sosbtn:hover { background: #b91c1c; }
-@media (max-width: 820px) { .nav.over .sosbtn { padding: 9px 12px; font-size: 13px; } }
+@media (max-width: 820px) { .nav.over .sosbtn { padding: 9px 12px; font-size: 13px; margin-right: 0; } }
 @media (max-width: 480px) { .nav.over { gap: 8px; } .nav.over .brand { font-size: 17px; gap: 6px; margin-right: 0; } .nav.over .brand > span:not(.logo) { display: none; } .nav.over .sosbtn, .nav.over .listbtn { font-size: 12px; padding: 8px 10px; } }
+/* HLP SOS: keep the nav on one line at laptop widths */
+@media (max-width: 1280px) { .nav.over .navlinks { gap: 16px; font-size: 14px; } .nav.over .brand { margin-right: 16px; } .nav.over .signin { margin-right: 10px; } .nav.over .sosbtn { margin-right: 8px; } }
+@media (max-width: 1120px) { .nav.over .navlinks { display: none; } }
+@media (max-width: 820px) { .nav.over .brand { margin-right: 0; } .nav.over .sosbtn { margin-right: 0; } }
+.nav.over .navlinks a, .nav.over .signin, .nav.over .listbtn { white-space: nowrap; } .nav.over .navlinks { flex-shrink: 1; }
+@media (max-width: 1400px) { .nav.over .navlinks > :nth-child(3), .nav.over .navlinks > :nth-child(4) { display: none; } }
