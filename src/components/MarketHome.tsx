@@ -55,6 +55,9 @@ function Nav({ market }: { market: Market }) {
         <Link href="/channel/hublinkpro">Your Channel</Link>
         <a href="#automations">HLP Automations</a>
       </div>
+      <Link href="/sos" className="sosbtn" aria-label="Home emergency? Get a pro now">
+        🚨 Home emergency
+      </Link>
       <Link href="/choose-area" className="signin" aria-label={`Area: ${market.name}. Change`}>
         📍 {market.name}
       </Link>
