@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { accentStyle } from "@/lib/accent";
+import { accentStyle, isPaidTier } from "@/lib/accent";
+import { bgCss } from "@/lib/background";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -139,12 +140,13 @@ export default async function ChannelPage({
   return (
     <>
       {schema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(schema) }} />}
+      {bgCss(c.bg_color, isPaidTier(c.tier)) && <style dangerouslySetInnerHTML={{ __html: bgCss(c.bg_color, isPaidTier(c.tier))! }} />}
       <nav className="nav">
         <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
         <Link href="/" className="navlinks" style={{ color: "var(--color-mist)" }}>← Back to discover</Link>
         <Link href="/dashboard" className="listbtn">Build your Channel</Link>
       </nav>
-      <div className="page" style={{ maxWidth: 860, ...accentStyle(c.accent_color, c.tier) }}>
+      <div className="page" style={{ maxWidth: 860, ...accentStyle(c.accent_color, c.tier, isPaidTier(c.tier) ? c.bg_color : null) }}>
         {c.status !== "live" && (
           <p className="note">Preview — this Channel isn&apos;t public yet ({c.status}).</p>
         )}

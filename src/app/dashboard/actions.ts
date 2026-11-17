@@ -8,6 +8,7 @@ import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
 import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
 import { toE164 } from "@/lib/twilio";
 import { isHex, accentReadable } from "@/lib/accent";
+import { bgDarkEnough } from "@/lib/background";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -93,6 +94,9 @@ export async function saveChannel(formData: FormData) {
   const accentRaw = String(formData.get("accent_color") ?? "").trim();
   const accentField = formData.has("accent_color") ? { accent_color: isHex(accentRaw) && accentReadable(accentRaw) ? accentRaw : null } : {};
 
+  const bgRaw = String(formData.get("bg_color") ?? "").trim();
+  const bgField = formData.has("bg_color") ? { bg_color: bgDarkEnough(bgRaw) ? bgRaw : null } : {};
+
   let current: { id: number; status: string; sms_consent: boolean } | null = null;
   if (id) {
     const { data } = await supabase.from("channels").select("id,status,sms_consent").eq("id", id).maybeSingle();
@@ -112,14 +116,14 @@ export async function saveChannel(formData: FormData) {
   if (current) {
     const { error } = await supabase
       .from("channels")
-      .update({ ...fields, ...accentField, ...consentFields, ...(status ? { status } : {}) })
+      .update({ ...fields, ...accentField, ...bgField, ...consentFields, ...(status ? { status } : {}) })
       .eq("id", current.id);
     if (error) redirect("/dashboard?error=save");
   } else {
     const slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 6)}`;
     const { error } = await supabase
       .from("channels")
-      .insert({ ...fields, ...accentField, ...consentFields, owner_id: user.id, slug, status: status ?? "draft" });
+      .insert({ ...fields, ...accentField, ...bgField, ...consentFields, owner_id: user.id, slug, status: status ?? "draft" });
     if (error) redirect("/dashboard?error=save");
   }
 
