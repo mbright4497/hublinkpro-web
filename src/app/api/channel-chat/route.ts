@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply: SORRY }, { status: 502 });
     }
     const data = (await res.json()) as { content?: { type: string; text?: string }[] };
-    const reply = (data.content ?? []).filter((p) => p.type === "text").map((p) => p.text ?? "").join("").trim();
+    const reply = (data.content ?? []).filter((p) => p.type === "text").map((p) => p.text ?? "").join("").replace(/\*\*|__|`/g, "").trim();
     return NextResponse.json({ reply: reply || SORRY });
   } catch (e) {
     console.error("[HLP-CHAT] error", String(e));
