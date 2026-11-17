@@ -126,12 +126,6 @@ export default async function MarketHome({ market }: { market: Market }) {
       {/* Full-bleed cinematic opener: our own Channel video behind the headline */}
       <Billboard stage={stage} eyebrow={`A HubLinkPro Channel · ${market.region_label}`} />
 
-      {/* Emergency: plain-language explainer so nobody has to guess what the red button does */}
-      <section className="sosbar" aria-labelledby="sosbar-h">
-        <p id="sosbar-h"><strong>🚨 Home emergency?</strong> Burst pipe, storm damage, no heat. The first on-call pro to accept is on the way.</p>
-        <Link href="/sos" className="sosbar-cta">Get a pro now →</Link>
-      </section>
-
       {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
       <PosterRow title="Browse by genre" icon="🎬" id="networks">
         {stage && <HouseStartCard stage={stage} />}
