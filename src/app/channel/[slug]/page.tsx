@@ -15,6 +15,7 @@ import { addPortfolioItem } from "@/app/dashboard/actions";
 import { SITE_URL, jsonLd } from "@/lib/site";
 import ChannelChat from "@/components/ChannelChat";
 import { chatEnabled } from "@/lib/chat";
+import { answerStat } from "@/lib/sos";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,7 @@ export default async function ChannelPage({
   const work = (workData ?? []) as WorkItem[];
   const shareUrl = `https://hublinkpro.com/channel/${c.slug}`;
   const isLive = c.status === "live";
+  const sosAnswer = isLive && c.tier === "pro" ? (await answerStat(c.id)).medianMin : null;
 
   // Structured data from real fields only: nothing here is invented.
   const sameAs = Object.values((c.social_links as Record<string, string> | null) ?? {}).filter(
@@ -163,6 +165,7 @@ export default async function ChannelPage({
         <div className="badge">{net?.name ?? "Local business"}{c.city ? ` · ${c.city}` : ""}</div>
         <h1>{c.name}</h1>
         {c.tagline && <p className="lead">{c.tagline}</p>}
+        {sosAnswer && <p style={{ fontSize: 14, fontWeight: 700, margin: "0 0 14px" }}>Emergency calls: answers in about {sosAnswer} min</p>}
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", margin: "0 0 28px" }}>
           {c.status === "live" && (
