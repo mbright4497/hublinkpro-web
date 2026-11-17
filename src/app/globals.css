@@ -422,3 +422,17 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .trucklist a{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);text-decoration:none;color:inherit}
 .trucklist small{flex-basis:100%;opacity:.65}
 .trucksCta{margin-top:32px;padding:18px;border-radius:14px;background:rgba(255,255,255,.06);line-height:1.8}
+
+/* Channel AI assistant */
+.chatbox { background: var(--color-ink2); border: 1px solid var(--color-line); border-radius: 16px; padding: 16px; margin: 0 0 28px; }
+.chathead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 17px; }
+.chatx { background: none; border: 0; color: inherit; font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.chatlog { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.chatchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chatchips .chip { cursor: pointer; font-family: inherit; }
+.chatmsg { padding: 10px 13px; border-radius: 14px; font-size: 15px; line-height: 1.5; max-width: 88%; white-space: pre-wrap; }
+.chatmsg.user { align-self: flex-end; background: var(--color-brand); color: var(--on-brand, #1a1205); }
+.chatmsg.assistant { align-self: flex-start; background: var(--color-card); border: 1px solid var(--color-line); }
+.chatform { display: flex; gap: 8px; }
+.chatform input { flex: 1; min-width: 0; background: var(--color-card); border: 1px solid var(--color-line); border-radius: 11px; color: inherit; font-size: 15px; padding: 11px 13px; font-family: inherit; }
+.chatform button { padding: 11px 18px; }

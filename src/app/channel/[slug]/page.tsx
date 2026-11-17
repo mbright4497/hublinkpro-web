@@ -13,6 +13,8 @@ import { addDays, dayKey } from "@/lib/booking";
 import { requestBooking } from "./actions";
 import { addPortfolioItem } from "@/app/dashboard/actions";
 import { SITE_URL, jsonLd } from "@/lib/site";
+import ChannelChat from "@/components/ChannelChat";
+import { chatEnabled } from "@/lib/chat";
 
 export const dynamic = "force-dynamic";
 
@@ -176,6 +178,8 @@ export default async function ChannelPage({
             <a href={c.website} target="_blank" rel="noopener noreferrer" className="btn-ghost">🌐 Website</a>
           )}
         </div>
+
+        {isLive && isPaidTier(c.tier) && chatEnabled() && <ChannelChat slug={c.slug} name={c.name} />}
 
         {socials.length > 0 && (
           <div className="socialrow">
