@@ -29,7 +29,7 @@ const contrast = (a: string, b: string) => {
 
 const BG = "#061021"; // page background
 // Readable as text/buttons on the dark page.
-export const accentReadable = (hex: string) => isHex(hex) && contrast(hex, BG) >= 4.5;
+export const accentReadable = (hex: string, bg: string = BG) => isHex(hex) && contrast(hex, bg) >= 4.5;
 
 function mix(hex: string, with_: number, amt: number) {
   return "#" + [1, 3, 5].map((i) => {
@@ -39,8 +39,8 @@ function mix(hex: string, with_: number, amt: number) {
 }
 
 // CSS variables for the Channel page, or undefined when the default look applies.
-export function accentStyle(hex: string | null | undefined, tier: string | null | undefined): CSSProperties | undefined {
-  if (!hex || !isPaidTier(tier) || !accentReadable(hex)) return undefined;
+export function accentStyle(hex: string | null | undefined, tier: string | null | undefined, bg?: string | null): CSSProperties | undefined {
+  if (!hex || !isPaidTier(tier) || !accentReadable(hex, bg && isHex(bg) ? bg : BG)) return undefined;
   const light = mix(hex, 255, 0.25);
   return {
     "--color-brand": hex,

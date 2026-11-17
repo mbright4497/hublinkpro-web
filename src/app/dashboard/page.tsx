@@ -8,6 +8,7 @@ import WorkAddForm from "@/components/WorkAddForm";
 import ShareChannel from "@/components/ShareChannel";
 import AccentPicker from "@/components/AccentPicker";
 import { isPaidTier } from "@/lib/accent";
+import BackgroundPicker from "@/components/BackgroundPicker";
 import TruckLiveCard from "@/components/TruckLiveCard";
 import { SOCIALS } from "@/lib/media";
 
@@ -418,6 +419,7 @@ export default async function Dashboard({
             <MediaField name="logo_url" kind="logo" userId={user.id} initial={ch?.logo_url} label="Logo" help="A square photo works best." />
             <MediaField name="hero_image_url" kind="hero" userId={user.id} initial={ch?.hero_image_url} label="Cover photo" help="A wide photo of your best work or your crew." />
             <AccentPicker initial={ch?.accent_color ?? null} paid={isPaidTier(ch?.tier)} slug={ch?.slug} />
+            <BackgroundPicker initial={ch?.bg_color ?? null} paid={isPaidTier(ch?.tier)} slug={ch?.slug} />
 
             <h2 className="dsec">The basics</h2>
             <div className="field">
