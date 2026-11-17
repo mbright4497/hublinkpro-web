@@ -8,7 +8,7 @@ import { BUCKET, SOCIALS, hostMatches, isReelUrl } from "@/lib/media";
 import { SLOT_LENGTHS, TIMEZONES } from "@/lib/booking";
 import { toE164 } from "@/lib/twilio";
 import { isHex, accentReadable } from "@/lib/accent";
-import { bgDarkEnough } from "@/lib/background";
+import { bgAllowed } from "@/lib/background";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -95,7 +95,7 @@ export async function saveChannel(formData: FormData) {
   const accentField = formData.has("accent_color") ? { accent_color: isHex(accentRaw) && accentReadable(accentRaw) ? accentRaw : null } : {};
 
   const bgRaw = String(formData.get("bg_color") ?? "").trim();
-  const bgField = formData.has("bg_color") ? { bg_color: bgDarkEnough(bgRaw) ? bgRaw : null } : {};
+  const bgField = formData.has("bg_color") ? { bg_color: bgAllowed(bgRaw) ? bgRaw : null } : {};
 
   let current: { id: number; status: string; sms_consent: boolean } | null = null;
   if (id) {

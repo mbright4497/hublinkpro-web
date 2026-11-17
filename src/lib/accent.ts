@@ -39,9 +39,18 @@ function mix(hex: string, with_: number, amt: number) {
 }
 
 // CSS variables for the Channel page, or undefined when the default look applies.
-export function accentStyle(hex: string | null | undefined, tier: string | null | undefined, bg?: string | null): CSSProperties | undefined {
-  if (!hex || !isPaidTier(tier) || !accentReadable(hex, bg && isHex(bg) ? bg : BG)) return undefined;
-  const light = mix(hex, 255, 0.25);
+export function accentStyle(hex_: string | null | undefined, tier: string | null | undefined, bg?: string | null): CSSProperties | undefined {
+  if (!hex_ || !isPaidTier(tier)) return undefined;
+  let hex: string = hex_;
+  const page = bg && isHex(bg) ? bg : BG;
+  // On a light page, darken the chosen color until it reads well; on the dark page an unreadable color is dropped.
+  if (lum(page) > 0.4) {
+    for (let a = 0; a <= 0.8 && !accentReadable(hex, page); a += 0.05) hex = mix(hex_, 0, a);
+  }
+  if (!accentReadable(hex, page)) return undefined;
+  const onLight = !!bg && isHex(bg) && lum(bg) > 0.4;
+  // On a light page the second color is a darker shade (readable as text); on dark it is lighter.
+  const light = onLight ? mix(hex, 0, 0.2) : mix(hex, 255, 0.25);
   return {
     "--color-brand": hex,
     "--color-brand2": light,

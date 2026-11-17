@@ -1,17 +1,17 @@
 "use client";
 import { useState } from "react";
-import { BG_PRESETS, DEFAULT_BG, bgDarkEnough } from "@/lib/background";
+import { BG_PRESETS, DEFAULT_BG, bgAllowed } from "@/lib/background";
 import { isHex } from "@/lib/accent";
 
 export default function BackgroundPicker({ initial, paid, slug }: { initial: string | null; paid: boolean; slug?: string }) {
   const [hex, setHex] = useState(initial ?? "");
   const valid = isHex(hex);
-  const ok = valid && bgDarkEnough(hex);
+  const ok = valid && bgAllowed(hex);
   const changed = (ok ? hex.toLowerCase() : "") !== (initial ?? "").toLowerCase();
   return (
     <div className="field">
       <label>Channel background {paid ? "" : "(Pro)"}</label>
-      {!paid && <p className="hint">Pick the background color of your Channel page. Available on Pro. Free Channels use the HubLinkPro midnight blue.</p>}
+      {!paid && <p className="hint">Pick the background of your Channel page, dark or white. Available on Pro. Free Channels use the HubLinkPro midnight blue.</p>}
       <input type="hidden" name="bg_color" value={paid && ok ? hex : ""} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", opacity: paid ? 1 : 0.5 }}>
         {BG_PRESETS.map((p) => {
@@ -28,7 +28,7 @@ export default function BackgroundPicker({ initial, paid, slug }: { initial: str
         {hex && <button type="button" className="btn-ghost" disabled={!paid} onClick={() => setHex("")}>Reset</button>}
       </div>
       {paid && hex && !valid && <p className="hint" style={{ color: "#ff8a80" }}>Use a six-digit color like #10161f.</p>}
-      {paid && valid && !ok && <p className="hint" style={{ color: "#ff8a80" }}>That color is too light. Backgrounds need to be dark so the text stays readable.</p>}
+      {paid && valid && !ok && <p className="hint" style={{ color: "#ff8a80" }}>That color is too in-between. Pick a clearly dark or clearly light background so the text stays readable.</p>}
       {paid && changed && (hex === "" || ok) && (
         <p style={{ marginTop: 12 }}>
           <button type="submit" name="intent" value="save" className="btn-primary">
