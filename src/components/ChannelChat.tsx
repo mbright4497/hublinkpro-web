@@ -28,16 +28,16 @@ export default function ChannelChat({ slug, name }: { slug: string; name: string
   }
 
   if (!open) {
-    return <p style={{ margin: "0 0 24px" }}><button type="button" className="btn-ghost" onClick={() => setOpen(true)}>💬 Ask {name} a question</button></p>;
+    return <p style={{ margin: "0 0 24px" }}><button type="button" className="btn-ghost" onClick={() => setOpen(true)}>💬 Ask Link</button></p>;
   }
   const starters = ["What services do you offer?", "Do you serve my area?", "How do I book?"];
   return (
-    <section className="chatbox" aria-label={`Ask ${name}`}>
+    <section className="chatbox" aria-label="Ask Link">
       <div className="chathead">
-        <b>Ask {name}</b>
+        <b>Ask Link</b>
         <button type="button" className="chatx" onClick={() => setOpen(false)} aria-label="Close chat">×</button>
       </div>
-      <p className="hint" style={{ margin: "0 0 10px" }}>AI assistant. It answers from this Channel only. Book a time to confirm prices and availability.</p>
+      <p className="hint" style={{ margin: "0 0 10px" }}>Hi, I'm Link, HubLinkPro's AI assistant. I answer from {name}'s Channel only. Book a time to confirm prices and availability.</p>
       <div className="chatlog" aria-live="polite">
         {msgs.length === 0 && <div className="chatchips">{starters.map((s) => <button key={s} type="button" className="chip" onClick={() => send(s)}>{s}</button>)}</div>}
         {msgs.map((m, i) => <div key={i} className={`chatmsg ${m.role}`}>{m.content}</div>)}
