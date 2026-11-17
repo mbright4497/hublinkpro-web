@@ -448,3 +448,6 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 @media (max-width: 820px) { .nav.over .brand { margin-right: 0; } .nav.over .sosbtn { margin-right: 0; } }
 .nav.over .navlinks a, .nav.over .signin, .nav.over .listbtn { white-space: nowrap; } .nav.over .navlinks { flex-shrink: 1; }
 @media (max-width: 1400px) { .nav.over .navlinks > :nth-child(3), .nav.over .navlinks > :nth-child(4) { display: none; } }
+/* Mobile food-truck entry: hidden on desktop (nav link covers it) */
+.ftstrip { display: none; }
+@media (max-width: 1120px) { .ftstrip { display: flex; align-items: center; justify-content: space-between; margin: 14px 5vw 0; padding: 12px 16px; border-radius: 12px; background: linear-gradient(135deg,#b4531a,#4a1f0a); color: #fff; font-weight: 700; font-size: 15px; } .ftstrip .ftgo { font-size: 13px; font-weight: 600; opacity: .85; white-space: nowrap; } }
