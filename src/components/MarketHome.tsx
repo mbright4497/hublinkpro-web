@@ -126,6 +126,12 @@ export default async function MarketHome({ market }: { market: Market }) {
       {/* Full-bleed cinematic opener: our own Channel video behind the headline */}
       <Billboard stage={stage} eyebrow={`A HubLinkPro Channel · ${market.region_label}`} />
 
+      {/* Mobile only: the top nav links are hidden on phones, so Food Trucks gets its own slim entry */}
+      <Link href="/food-trucks" className="ftstrip">
+        <span>🚚 Food trucks near you</span>
+        <span className="ftgo">See live map ›</span>
+      </Link>
+
       {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
       <PosterRow title="Browse by genre" icon="🎬" id="networks">
         {stage && <HouseStartCard stage={stage} />}
