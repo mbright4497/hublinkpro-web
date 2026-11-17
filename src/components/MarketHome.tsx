@@ -55,6 +55,9 @@ function Nav({ market }: { market: Market }) {
         <Link href="/channel/hublinkpro">Your Channel</Link>
         <a href="#automations">HLP Automations</a>
       </div>
+      <Link href="/sos" className="sosbtn" aria-label="Home emergency? Get a pro now">
+        🚨 Emergency
+      </Link>
       <Link href="/choose-area" className="signin" aria-label={`Area: ${market.name}. Change`}>
         📍 {market.name}
       </Link>
@@ -122,6 +125,16 @@ export default async function MarketHome({ market }: { market: Market }) {
 
       {/* Full-bleed cinematic opener: our own Channel video behind the headline */}
       <Billboard stage={stage} eyebrow={`A HubLinkPro Channel · ${market.region_label}`} />
+
+      {/* Emergency: plain-language explainer so nobody has to guess what the red button does */}
+      <section className="sosbar" aria-labelledby="sosbar-h">
+        <div className="sosbar-txt">
+          <h2 id="sosbar-h">🚨 Burst pipe? Storm damage? No heat?</h2>
+          <p>Tell us what&apos;s wrong. We call the on-call pros near you right now, and the first one to say yes is on the way. You see who is coming and when.</p>
+          <small>Emergencies only. Fire, gas smell or a medical emergency? Call 911 first.</small>
+        </div>
+        <Link href="/sos" className="sosbar-cta">Get a pro now →</Link>
+      </section>
 
       {/* Genre row: every Network is a poster. Real categories, no invented businesses. */}
       <PosterRow title="Browse by genre" icon="🎬" id="networks">
