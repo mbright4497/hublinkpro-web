@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { setChannelStatus, markMessageRead, saveNote, createCode, emailCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
+import { emailSetup, setChannelStatus, markMessageRead, saveNote, createCode, emailCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
@@ -134,7 +134,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
         <h1 style={{ marginTop: 32 }}>Founding codes</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Give a friend a code. They enter it on their dashboard and get Pro free for the months you set. It returns to Free on its own when the time is up.</p>
-        {mailed === "sent" && <p className="note ok">Code emailed from support@hublinkpro.com. Check Email delivery below.</p>}
+        {mailed === "sent" && <p className="note ok">Email sent from support@hublinkpro.com. Check Email delivery below.</p>}
         {mailed === "failed" && <p className="note">The email didn&apos;t send. Check Email delivery below.</p>}
         {mailed === "invalid" && <p className="note">Enter a valid email, and the code must be on.</p>}
         {codeMsg === "made" && <p className="note ok">Code created: <strong>{newCode}</strong></p>}
@@ -265,6 +265,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
               <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
                 {s.slug && <Link href={`/channel/${s.slug}`} className="btn-ghost">Preview</Link>}
                 {s.channel_id && <Link href={`/admin/channel/${s.channel_id}`} className="btn-ghost">Activity</Link>}
+                {s.channel_id && (
+                  <form action={emailSetup} style={{ display: "flex", gap: 6 }}>
+                    <input type="hidden" name="id" value={s.channel_id} />
+                    <input name="first_name" placeholder="First name" aria-label="First name" style={{ width: 120 }} />
+                    <button className="btn-ghost" type="submit">Email: you&apos;re set up</button>
+                  </form>
+                )}
                 {s.channel_id && s.status !== "live" && (
                   <form action={setChannelStatus}>
                     <input type="hidden" name="id" value={s.channel_id} />

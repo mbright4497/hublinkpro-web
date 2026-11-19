@@ -134,3 +134,31 @@ export async function emailCode(formData: FormData) {
   const ok = await sendEmail({ to, replyTo: SUPPORT_EMAIL, subject, ...renderEmail(parts), log: { label: "Founding code" } });
   redirect(`/admin?mailed=${ok ? "sent" : "failed"}`);
 }
+
+// Emails the owner "you're set up" after Matt submitted their Channel / applied a code by hand.
+// Sent from support@hublinkpro.com through the site and logged under Email delivery.
+export async function emailSetup(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const id = Number(formData.get("id"));
+  const first = String(formData.get("first_name") ?? "").trim().slice(0, 40);
+  if (!id) redirect("/admin?mailed=invalid");
+  const { supabaseAdmin } = await import("@/lib/supabase/admin");
+  const db = supabaseAdmin();
+  if (!db) redirect("/admin?mailed=failed");
+  const { data: ch } = await db.from("channels").select("name,owner_id,status,comp_code_id").eq("id", id).maybeSingle();
+  if (!ch) redirect("/admin?mailed=invalid");
+  const { sendEmail, ownerEmail, SUPPORT_EMAIL } = await import("@/lib/notify");
+  const to = await ownerEmail(ch.owner_id);
+  if (!to) redirect("/admin?mailed=failed");
+  let months: number | undefined;
+  if (ch.comp_code_id) {
+    const { data: pc } = await db.from("promo_codes").select("months").eq("id", ch.comp_code_id).maybeSingle();
+    months = pc?.months ?? undefined;
+  }
+  const { renderEmail, setupEmail } = await import("@/lib/email-template");
+  const { subject, parts } = setupEmail({ name: first || undefined, channelName: ch.status === "pending" ? ch.name : undefined, codeMonths: months });
+  const ok = await sendEmail({ to, replyTo: SUPPORT_EMAIL, subject, ...renderEmail(parts), log: { label: "Setup email" } });
+  redirect(`/admin?mailed=${ok ? "sent" : "failed"}`);
+}
