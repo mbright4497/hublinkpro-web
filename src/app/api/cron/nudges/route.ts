@@ -33,7 +33,7 @@ export async function GET(req: Request) {
       const { error: claimErr } = await db.from("signup_nudges").insert({ user_id: c.user_id, kind });
       if (claimErr) continue;
       const { subject, text } = buildNudge(kind, c);
-      const ok = await sendEmail({ to: c.email, subject, text, replyTo: ADMIN_EMAIL });
+      const ok = await sendEmail({ to: c.email, subject, text, replyTo: ADMIN_EMAIL, log: { userId: c.user_id, label: `Signup nudge (${kind})` } });
       if (ok) result.sent.push({ kind, email: c.email });
       else {
         await db.from("signup_nudges").delete().eq("user_id", c.user_id).eq("kind", kind); // let tomorrow retry

@@ -26,9 +26,9 @@ export async function POST(req: Request) {
   const { error } = await db.from("sos_dispatches").insert({ request_id: rid, channel_id: cid, wave: 0, method: "sms", response: "accepted" });
   if (error) return done;
 
-  await sendSms(from, ch.forward_to!, `HLP SOS job: ${categoryLabel(r.category)}. ${r.name} ${r.phone}, zip ${r.zip}. ${r.problem ?? ""} Call them now. ETA promised: ${r.eta_minutes} min.`.trim());
+  await sendSms(from, ch.forward_to!, `HLP SOS job: ${categoryLabel(r.category)}. ${r.name} ${r.phone}, zip ${r.zip}. ${r.problem ?? ""} Call them now. ETA promised: ${r.eta_minutes} min.`.trim(), { channelId: cid, label: "SOS job details text to pro" });
   if (r.sms_consent) {
-    await sendSms(from, r.phone, `HubLinkPro: ${ch.name} is on the way, about ${r.eta_minutes} min. Track it: ${SITE_BASE}/sos/${r.token} Reply STOP to opt out.`);
+    await sendSms(from, r.phone, `HubLinkPro: ${ch.name} is on the way, about ${r.eta_minutes} min. Track it: ${SITE_BASE}/sos/${r.token} Reply STOP to opt out.`, { channelId: cid, label: "SOS ETA text to homeowner" });
   }
   return done;
 }

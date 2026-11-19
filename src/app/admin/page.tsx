@@ -86,7 +86,22 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <span />
       </nav>
       <div className="page" style={{ maxWidth: 900 }}>
-        <h1>Founding codes</h1>
+        <h1>Recently added</h1>
+        <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Newest signups first. &ldquo;New&rdquo; means in the last 3 days.</p>
+        {[...signups].sort((a, b) => +new Date(b.signed_up_at) - +new Date(a.signed_up_at)).slice(0, 8).map((s) => (
+          <div key={s.user_id} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
+            <div>
+              <strong>{s.name ?? s.email}</strong>
+              {Date.now() - +new Date(s.signed_up_at) < 3 * 86400000 && <span className="statuspill" style={{ marginLeft: 8 }}>new</span>}
+              <span className="statuspill" style={{ marginLeft: 6 }}>{s.channel_id ? s.status : "no channel"}</span>
+              <br /><span style={{ color: "var(--color-muted)", fontSize: 13 }}>{s.email}{s.phone ? ` · ${s.phone}` : ""} · {s.network_name ?? "No Network"} · signed up {fmt(s.signed_up_at)}</span>
+            </div>
+            {s.channel_id && <Link href={`/admin/channel/${s.channel_id}`} className="btn-ghost">Activity</Link>}
+          </div>
+        ))}
+        {signups.length === 0 && <p className="lead" style={{ fontSize: 14 }}>No signups yet.</p>}
+
+        <h1 style={{ marginTop: 32 }}>Founding codes</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Give a friend a code. They enter it on their dashboard and get Pro free for the months you set. It returns to Free on its own when the time is up.</p>
         {codeMsg === "made" && <p className="note ok">Code created: <strong>{newCode}</strong></p>}
         {codeMsg === "dup" && <p className="note">That code already exists. Pick another.</p>}
@@ -210,6 +225,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
               </p>
               <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
                 {s.slug && <Link href={`/channel/${s.slug}`} className="btn-ghost">Preview</Link>}
+                {s.channel_id && <Link href={`/admin/channel/${s.channel_id}`} className="btn-ghost">Activity</Link>}
                 {s.channel_id && s.status !== "live" && (
                   <form action={setChannelStatus}>
                     <input type="hidden" name="id" value={s.channel_id} />

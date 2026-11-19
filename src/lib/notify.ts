@@ -2,11 +2,18 @@
 // already saved by the time these run, so an email problem must never break the visitor's flow.
 // Resend is called with raw fetch (no SDK). Missing keys just mean "skip quietly".
 import { SUPABASE_URL } from "@/lib/supabase/env";
+import { logMessage, type LogMeta } from "@/lib/msglog";
 
 // Sender is set in Vercel as RESEND_FROM (must be on a domain verified in Resend).
 export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
-export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string }) {
+export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string; log?: LogMeta }) {
+  const ok = await deliver(opts);
+  if (opts.log) await logMessage({ ...opts.log, medium: "email", to: opts.to, subject: opts.subject, body: opts.text, ok });
+  return ok;
+}
+
+async function deliver(opts: { to: string; subject: string; text: string; replyTo?: string }) {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[HLP-EMAIL] skipped: RESEND_API_KEY is not set in this deployment");
