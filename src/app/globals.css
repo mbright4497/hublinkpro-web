@@ -498,6 +498,11 @@ button.btn-ghost { border: 1px solid rgba(255,255,255,.16); }
 .crm-stat { background: var(--color-card); border: 1px solid var(--color-line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
 .crm-stat b { font-size: 32px; line-height: 1; font-weight: 800; letter-spacing: -.02em; }
 .crm-stat span { color: var(--color-muted); font-size: 13px; font-weight: 600; }
+a.crm-stat { text-decoration: none; color: inherit; cursor: pointer; transition: border-color .15s, transform .15s; }
+a.crm-stat:hover { border-color: var(--color-brand2); transform: translateY(-1px); }
+.crm-stat.on { border-color: var(--color-brand2); box-shadow: 0 0 0 1px var(--color-brand2) inset; }
+.crm-showing { margin: -6px 0 14px; color: var(--color-muted); font-size: 14px; }
+.crm-showing a { color: var(--color-brand2); font-weight: 700; }
 .crm-stat.hot { border-color: rgba(251,146,60,.55); box-shadow: 0 0 0 1px rgba(251,146,60,.15) inset; }
 
 .crm-next { background: linear-gradient(180deg, rgba(251,146,60,.08), rgba(251,146,60,.02)); border: 1px solid rgba(251,146,60,.35); border-radius: 16px; padding: 16px; margin-bottom: 22px; }

@@ -103,9 +103,25 @@ export default async function CrmPage({
   const ql = q.toLowerCase();
   const qd = phoneDigits(q);
   const source = sp.source && SOURCES[sp.source] ? sp.source : "";
-  const view = sp.view === "list" ? "list" : "board";
+  const SHOWS: Record<string, string> = {
+    new: "New",
+    due: "Follow-ups due",
+    progress: "In progress",
+    won: "Won, last 30 days",
+  };
+  const show = sp.show && SHOWS[sp.show] ? sp.show : "";
+  const monthAgo = Date.now() - 30 * 86400000;
+  const inShow = (l: Lead) =>
+    show === "new" ? l.status === "new"
+    : show === "due" ? isDue(l, today)
+    : show === "progress" ? ["contacted", "quoted", "booked"].includes(l.status)
+    : show === "won" ? l.status === "won" && Date.parse(l.last_activity_at) >= monthAgo
+    : true;
+  // A tile filter always reads best as a list.
+  const view = show || sp.view === "list" ? "list" : "board";
   const leads = all.filter(
     (l) =>
+      inShow(l) &&
       (!source || l.source === source) &&
       (!q ||
         l.name.toLowerCase().includes(ql) ||
@@ -118,7 +134,6 @@ export default async function CrmPage({
   const newCount = all.filter((l) => l.status === "new").length;
   const dueCount = all.filter((l) => isDue(l, today)).length;
   const inFlight = all.filter((l) => ["contacted", "quoted", "booked"].includes(l.status)).length;
-  const monthAgo = Date.now() - 30 * 86400000;
   const wonRecent = all.filter((l) => l.status === "won" && Date.parse(l.last_activity_at) >= monthAgo);
   const wonValue = wonRecent.reduce((n, l) => n + (l.value_cents ?? 0), 0);
 
@@ -132,7 +147,8 @@ export default async function CrmPage({
     const p = new URLSearchParams();
     if (q) p.set("q", q);
     if (source) p.set("source", source);
-    if (view === "list") p.set("view", "list");
+    if (show) p.set("show", show);
+    else if (view === "list") p.set("view", "list");
     for (const [k, v] of Object.entries(extra)) {
       if (v) p.set(k, v);
       else p.delete(k);
@@ -195,23 +211,30 @@ export default async function CrmPage({
         ) : (
           <>
             <div className="crm-stats">
-              <div className="crm-stat">
+              <Link href={show === "new" ? "/dashboard/crm" : "/dashboard/crm?show=new"} className={`crm-stat${show === "new" ? " on" : ""}`} aria-current={show === "new" ? "page" : undefined}>
                 <b style={{ color: "#60a5fa" }}>{newCount}</b>
                 <span>New</span>
-              </div>
-              <div className={`crm-stat${dueCount ? " hot" : ""}`}>
+              </Link>
+              <Link href={show === "due" ? "/dashboard/crm" : "/dashboard/crm?show=due"} className={`crm-stat${dueCount ? " hot" : ""}${show === "due" ? " on" : ""}`} aria-current={show === "due" ? "page" : undefined}>
                 <b style={{ color: dueCount ? "#fb923c" : undefined }}>{dueCount}</b>
                 <span>Follow-ups due</span>
-              </div>
-              <div className="crm-stat">
+              </Link>
+              <Link href={show === "progress" ? "/dashboard/crm" : "/dashboard/crm?show=progress"} className={`crm-stat${show === "progress" ? " on" : ""}`} aria-current={show === "progress" ? "page" : undefined}>
                 <b style={{ color: "#34d399" }}>{inFlight}</b>
                 <span>In progress</span>
-              </div>
-              <div className="crm-stat">
+              </Link>
+              <Link href={show === "won" ? "/dashboard/crm" : "/dashboard/crm?show=won"} className={`crm-stat${show === "won" ? " on" : ""}`} aria-current={show === "won" ? "page" : undefined}>
                 <b style={{ color: "#22c55e" }}>{wonRecent.length}</b>
                 <span>Won, last 30 days{wonValue ? ` · ${dollars(wonValue)}` : ""}</span>
-              </div>
+              </Link>
             </div>
+
+            {show && (
+              <p className="crm-showing">
+                Showing <strong>{SHOWS[show]}</strong> ({leads.length}).{" "}
+                <Link href={qs({ show: "" })}>Show everyone</Link>
+              </p>
+            )}
 
             {queue.length > 0 && (
               <section className="crm-next" aria-labelledby="crm-next-h">
@@ -249,7 +272,7 @@ export default async function CrmPage({
 
             <div className="crm-tools">
               <form method="get" action="/dashboard/crm" className="crm-search" role="search">
-                {view === "list" && <input type="hidden" name="view" value="list" />}
+                {show ? <input type="hidden" name="show" value={show} /> : view === "list" && <input type="hidden" name="view" value="list" />}
                 <input
                   type="search"
                   name="q"
@@ -266,14 +289,14 @@ export default async function CrmPage({
                 <button className="crm-btn" type="submit">Search</button>
                 {(q || source) && <Link className="crm-btn" href={qs({ q: "", source: "" })}>Clear</Link>}
               </form>
-              <div className="crm-seg" role="group" aria-label="View">
+              {!show && <div className="crm-seg" role="group" aria-label="View">
                 <Link href={qs({ view: "" })} className={view === "board" ? "on" : ""} aria-current={view === "board" ? "page" : undefined}>Board</Link>
                 <Link href={qs({ view: "list" })} className={view === "list" ? "on" : ""} aria-current={view === "list" ? "page" : undefined}>List</Link>
-              </div>
+              </div>}
             </div>
 
             {leads.length === 0 ? (
-              <p className="sub">No leads match that search.</p>
+              <p className="sub">{show || q || source ? "No leads match that." : "Nothing here yet."}</p>
             ) : view === "board" ? (
               <div className="crm-board">
                 {STATUSES.map((s) => {
