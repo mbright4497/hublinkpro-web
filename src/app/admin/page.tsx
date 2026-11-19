@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -77,6 +78,23 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     saved: "Tracking number saved.", invalid: "Enter a Channel slug and a 10-digit US number.",
     taken: "That number is already assigned to another Channel.", noslug: "No Channel has that slug.", error: "Couldn't save. Try again.",
   };
+  // Email delivery check: last 12 logged emails, with live status from Resend (delivered / bounced / ...).
+  const adb = supabaseAdmin();
+  const { data: sentRows } = adb
+    ? await adb.from("message_log").select("to_addr,subject,label,ok,resend_id,created_at").eq("medium", "email").order("created_at", { ascending: false }).limit(12)
+    : { data: null };
+  const rkey = process.env.RESEND_API_KEY;
+  const sent = await Promise.all((sentRows ?? []).map(async (r) => {
+    let status = r.ok ? "sent (status unavailable)" : "FAILED to send";
+    if (r.ok && r.resend_id && rkey) {
+      try {
+        const res = await fetch(`https://api.resend.com/emails/${r.resend_id}`, { headers: { Authorization: `Bearer ${rkey}` }, cache: "no-store", signal: AbortSignal.timeout(4000) });
+        if (res.ok) status = ((await res.json()) as { last_event?: string }).last_event ?? status;
+        else status = `sent (Resend lookup ${res.status})`;
+      } catch { /* leave default */ }
+    }
+    return { ...r, status };
+  }));
   const unread = (messages ?? []).filter((m) => !m.read).length;
   return (
     <>
@@ -86,7 +104,20 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <span />
       </nav>
       <div className="page" style={{ maxWidth: 900 }}>
-        <h1>Recently added</h1>
+        <h1>Email delivery</h1>
+        <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Last 12 emails the site sent. &ldquo;delivered&rdquo; means the inbox provider accepted it. &ldquo;bounced&rdquo; or &ldquo;FAILED&rdquo; means it did not arrive.</p>
+        {sent.length === 0 && <p className="lead" style={{ fontSize: 14 }}>No emails logged yet.</p>}
+        {sent.map((m, i) => (
+          <div key={i} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div>
+              <strong>{m.label}</strong> → {m.to_addr}<br />
+              <span style={{ color: "var(--color-muted)", fontSize: 13 }}>{m.subject} · {new Date(m.created_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+            </div>
+            <span className="statuspill">{m.status}</span>
+          </div>
+        ))}
+
+        <h1 style={{ marginTop: 32 }}>Recently added</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Newest signups first. &ldquo;New&rdquo; means in the last 3 days.</p>
         {[...signups].sort((a, b) => +new Date(b.signed_up_at) - +new Date(a.signed_up_at)).slice(0, 8).map((s) => (
           <div key={s.user_id} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
