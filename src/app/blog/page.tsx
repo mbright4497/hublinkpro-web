@@ -7,8 +7,10 @@ export const metadata: Metadata = {
   description: "Straight talk on home repairs, local pros and what to do when something breaks, from the Tri-Cities.",
 };
 
-export default function BlogIndex() {
-  const posts = getPosts();
+export const revalidate = 60;
+
+export default async function BlogIndex() {
+  const posts = await getPosts();
   return (
     <>
       <nav className="nav">
@@ -29,7 +31,7 @@ export default function BlogIndex() {
           {posts.map((p) => (
             <li key={p.slug}>
               <Link href={`/blog/${p.slug}`}>
-                <span className="pdate">{prettyDate(p.date)}{p.draft ? " · DRAFT" : ""}</span>
+                <span className="pdate">{prettyDate(p.date)}</span>
                 <span className="ptitle">{p.title}</span>
                 <span className="pdesc">{p.description}</span>
               </Link>

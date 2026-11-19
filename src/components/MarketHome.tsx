@@ -3,6 +3,7 @@ import PosterCard from "@/components/PosterCard";
 import HowItWorks from "@/components/HowItWorks";
 import { NETWORKS, type Business } from "@/lib/data";
 import { localChannels, houseStage } from "@/lib/channels";
+import { getPosts } from "@/lib/blog";
 import Billboard from "@/components/Billboard";
 import HouseStartCard from "@/components/HouseStartCard";
 import type { Market } from "@/lib/markets";
@@ -107,7 +108,8 @@ function Row({
 }
 
 export default async function MarketHome({ market }: { market: Market }) {
-  const [local, stage] = await Promise.all([localChannels(market.slug), houseStage()]);
+  const [local, stage, posts] = await Promise.all([localChannels(market.slug), houseStage(), getPosts()]);
+  const hasPosts = posts.length > 0;
   const zips = market.featured_zips;
   const SLOTS = zips.length ? SERVICES.map((s, i) => ({ ...s, zip: zips[i % zips.length] })) : [];
   const food = local.filter((b) => b.networkId === "food");
@@ -258,6 +260,7 @@ export default async function MarketHome({ market }: { market: Market }) {
           <a href="#discover">Discover local pros</a>
           <a href="#networks">Browse Networks</a>
           <Link href="/food-trucks">Food Truck Map</Link>
+          {hasPosts && <Link href="/blog">Blog</Link>}
         </div>
         <div className="col">
           <h4>Businesses</h4>
