@@ -25,6 +25,7 @@ const toPost = (r: Row): Post => ({
 });
 
 async function query(qs: string): Promise<Post[]> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=slug,title,description,service,body,published_at&published=eq.true&${qs}`, {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
