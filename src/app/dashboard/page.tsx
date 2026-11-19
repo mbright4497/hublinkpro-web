@@ -15,6 +15,7 @@ import { SOS_CATEGORIES, categoryLabel } from "@/lib/sos-categories";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { answerStat } from "@/lib/sos";
 import { isDue, todayIn, type Lead } from "@/lib/crm";
+import DashTabs, { type DashTab } from "@/components/DashTabs";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Channel | HubLinkPro" };
@@ -152,6 +153,14 @@ export default async function Dashboard({
   };
   const proThrough = ch?.pro_until ? new Date(ch.pro_until).toLocaleDateString("en-US", { timeZone: "America/New_York", month: "long", day: "numeric", year: "numeric" }) : null;
   const editable = !ch || ch.status !== "pending";
+  const leadProgress = leadList.filter((l) => ["contacted", "quoted", "booked"].includes(l.status)).length;
+  // Which tab we're on. After a save the actions send people back with a result message (?cal=saved and so on),
+  // so the message tells us which tab to stay on.
+  const TAB_KEYS = ["home", "schedule", "work", "look", "plan"];
+  const inferred: DashTab =
+    sp.cal || sp.sos || sp.calls ? "schedule" : sp.work ? "work" : sp.code ? "plan" : sp.error || sp.saved || sp.submitted ? "look" : "home";
+  const tab: DashTab = !ch ? "look" : sp.tab && TAB_KEYS.includes(sp.tab) ? (sp.tab as DashTab) : inferred;
+  const nextBooking = upcoming?.[0] ?? null;
 
   return (
     <>
@@ -167,17 +176,20 @@ export default async function Dashboard({
       </nav>
       <div className="page">
         <h1>{ch ? "Your Channel" : "Create your Channel"}</h1>
-        <p className="lead">
-          Your Channel is your station on HubLinkPro: who you are, what you do, a short commercial,
-          and a button that lets neighbors book you.
-        </p>
+        {(!ch || tab === "home") && (
+          <p className="lead">
+            Your Channel is your station on HubLinkPro: who you are, what you do, a short commercial,
+            and a button that lets neighbors book you.
+          </p>
+        )}
 
         {sp.error && <p className="note">{ERRORS[sp.error] ?? "Something went wrong."}</p>}
         {sp.saved && <p className="note ok">Saved.</p>}
-        {ch && ch.status === "draft" && !sp.submitted && (
+        {ch && ch.status === "draft" && !sp.submitted && (tab === "home" || tab === "look") && (
           <p className="note">
             <b>Your Channel isn&apos;t live yet.</b> It&apos;s saved as a draft and nobody can see it. Fill in what you can, then
-            press <b>Submit for review</b> at the bottom of the page.
+            press <b>Submit for review</b> at the bottom of{" "}
+            {tab === "look" ? "this page" : <Link href="/dashboard?tab=look" style={{ textDecoration: "underline" }}>Look &amp; basics</Link>}.
           </p>
         )}
         {sp.submitted && (
@@ -195,7 +207,9 @@ export default async function Dashboard({
           </p>
         )}
 
-        {ch && ch.status === "live" && (
+        {ch && <DashTabs active={tab} leadsBadge={leadNew} scheduleBadge={upcoming?.length ?? 0} />}
+
+        {ch && ch.status === "live" && tab === "home" && (
           <section id="share" className="sharebox" style={{ margin: "8px 0 28px" }}>
             <div>
               <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Share your Channel</h2>
@@ -216,27 +230,41 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "home" && (
           <section id="leads" style={{ margin: "8px 0 28px" }}>
-            <Link href="/dashboard/crm" className="crm-dashcard">
-              <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Your leads</h2>
-              {leadList.length === 0 ? (
-                <p className="lead" style={{ fontSize: 14, margin: "0 0 8px" }}>
-                  Everyone who books, asks, or calls shows up here automatically. Free CRM, built in.
-                </p>
-              ) : (
-                <div className="row">
-                  <div><b>{leadNew}</b><span>new</span></div>
-                  <div><b style={{ color: leadDue ? "#fb923c" : undefined }}>{leadDue}</b><span>follow-ups due</span></div>
-                  <div><b>{leadList.length}</b><span>total</span></div>
-                </div>
-              )}
-              <span style={{ color: "var(--color-brand2)", fontWeight: 800, fontSize: 14 }}>Open your leads →</span>
-            </Link>
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Today</h2>
+            <div className="crm-stats">
+              <Link href="/dashboard/crm?show=new" className="crm-stat">
+                <b style={{ color: "#60a5fa" }}>{leadNew}</b>
+                <span>New leads</span>
+              </Link>
+              <Link href="/dashboard/crm?show=due" className={`crm-stat${leadDue ? " hot" : ""}`}>
+                <b style={{ color: leadDue ? "#fb923c" : undefined }}>{leadDue}</b>
+                <span>Follow-ups due</span>
+              </Link>
+              <Link href="/dashboard/crm?show=progress" className="crm-stat">
+                <b style={{ color: "#34d399" }}>{leadProgress}</b>
+                <span>In progress</span>
+              </Link>
+              <Link href="/dashboard?tab=schedule" className="crm-stat">
+                <b>{upcoming?.length ?? 0}</b>
+                <span>Upcoming bookings</span>
+              </Link>
+            </div>
+            {nextBooking && (
+              <p className="lead" style={{ fontSize: 14, margin: "0 0 10px" }}>
+                Next booking: <strong>{fmtWhen(nextBooking.starts_at, ch.booking_timezone)}</strong> with {nextBooking.name}.
+              </p>
+            )}
+            <p style={{ margin: 0 }}>
+              <Link href="/dashboard/crm" style={{ color: "var(--color-brand2)", fontWeight: 800, fontSize: 14 }}>
+                {leadList.length === 0 ? "Open your leads. Everyone who books, asks, or calls lands there on their own →" : "Open your leads →"}
+              </Link>
+            </p>
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "schedule" && (
           <section id="bookings" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Booking calendar</h2>
             {sp.cal && CAL_MSG[sp.cal] && <p className={`note ${sp.cal === "saved" || sp.cal === "cancelled" ? "ok" : ""}`}>{CAL_MSG[sp.cal]}</p>}
@@ -312,7 +340,7 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "schedule" && (
           <section id="sos" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Emergency jobs (SOS)</h2>
             {sp.sos && SOS_MSG[sp.sos] && <p className={`note ${sp.sos === "saved" ? "ok" : ""}`}>{SOS_MSG[sp.sos]}</p>}
@@ -360,7 +388,7 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "schedule" && (
           <section id="calls" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Calls</h2>
             {sp.calls && CALLS_MSG[sp.calls] && <p className={`note ${sp.calls === "saved" ? "ok" : ""}`}>{CALLS_MSG[sp.calls]}</p>}
@@ -401,7 +429,7 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "schedule" && (
           <section id="requests" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Booking requests</h2>
             {!requests?.length ? (
@@ -437,7 +465,7 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "plan" && (
           <section id="plan" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Your plan</h2>
             {sp.code && CODE_MSG[sp.code] && (
@@ -460,13 +488,13 @@ export default async function Dashboard({
           </section>
         )}
 
-        {ch?.is_food_truck && (
+        {ch?.is_food_truck && tab === "work" && (
           <section style={{ margin: "8px 0 28px" }}>
             <TruckLiveCard goLive={truckGoLive} goOffline={truckGoOffline} liveUntil={truckRow?.live_until ?? null} note={truckRow?.note ?? null} />
           </section>
         )}
 
-        {ch && (
+        {ch && tab === "work" && (
           <section id="work" style={{ margin: "8px 0 28px" }}>
             <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0 }}>Your work</h2>
             <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>
@@ -512,7 +540,7 @@ export default async function Dashboard({
           </section>
         )}
 
-        <form action={saveChannel}>
+        {(!ch || tab === "look") && <form action={saveChannel}>
           {ch && <input type="hidden" name="id" value={ch.id} />}
           <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0 }}>
             <h2 className="dsec">Your look</h2>
@@ -624,7 +652,7 @@ export default async function Dashboard({
               )}
             </div>
           </fieldset>
-        </form>
+        </form>}
       </div>
     </>
   );

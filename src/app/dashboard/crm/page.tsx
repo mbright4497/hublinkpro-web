@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import DashTabs from "@/components/DashTabs";
 import { supabaseServer } from "@/lib/supabase/server";
 import { signOut } from "../actions";
 import { addLead, setLeadStatus } from "./actions";
@@ -172,9 +173,7 @@ export default async function CrmPage({
       </nav>
 
       <main className="crm">
-        <p style={{ margin: "0 0 14px" }}>
-          <Link href="/dashboard" style={{ color: "var(--color-brand2)", fontWeight: 700, fontSize: 14 }}>← Your Channel</Link>
-        </p>
+        <DashTabs active="leads" leadsBadge={newCount} />
         <div className="crm-top">
           <div>
             <h1>Your leads</h1>
