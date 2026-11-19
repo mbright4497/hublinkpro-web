@@ -165,6 +165,12 @@ export default async function Dashboard({
 
         {sp.error && <p className="note">{ERRORS[sp.error] ?? "Something went wrong."}</p>}
         {sp.saved && <p className="note ok">Saved.</p>}
+        {ch && ch.status === "draft" && !sp.submitted && (
+          <p className="note">
+            <b>Your Channel isn&apos;t live yet.</b> It&apos;s saved as a draft and nobody can see it. Fill in what you can, then
+            press <b>Submit for review</b> at the bottom of the page.
+          </p>
+        )}
         {sp.submitted && (
           <p className="note ok">
             Submitted. We&apos;ll verify your Channel and publish it. You&apos;ll keep full control of it.
