@@ -14,6 +14,7 @@ import { SOCIALS } from "@/lib/media";
 import { SOS_CATEGORIES, categoryLabel } from "@/lib/sos-categories";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { answerStat } from "@/lib/sos";
+import { isDue, todayIn, type Lead } from "@/lib/crm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Channel | HubLinkPro" };
@@ -82,6 +83,14 @@ export default async function Dashboard({
         .order("created_at", { ascending: false })
         .limit(25)
     : { data: [] };
+  // Just the counts for the "Your leads" card; the full CRM lives at /dashboard/crm.
+  const { data: leadRows } = ch
+    ? await supabase.from("leads").select("status,follow_up_on").eq("channel_id", ch.id).limit(2000)
+    : { data: [] };
+  const leadList = (leadRows ?? []) as Pick<Lead, "status" | "follow_up_on">[];
+  const leadToday = ch ? todayIn(ch.booking_timezone) : "";
+  const leadNew = leadList.filter((l) => l.status === "new").length;
+  const leadDue = leadList.filter((l) => isDue(l as Lead, leadToday)).length;
   const SOS_MSG: Record<string, string> = {
     saved: "Emergency settings saved.",
     arrived: "Marked as arrived.",
@@ -204,6 +213,26 @@ export default async function Dashboard({
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/channel/${ch.slug}/qr`} alt={`QR code for ${ch.name}`} width={132} height={132} className="qrimg" />
+          </section>
+        )}
+
+        {ch && (
+          <section id="leads" style={{ margin: "8px 0 28px" }}>
+            <Link href="/dashboard/crm" className="crm-dashcard">
+              <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Your leads</h2>
+              {leadList.length === 0 ? (
+                <p className="lead" style={{ fontSize: 14, margin: "0 0 8px" }}>
+                  Everyone who books, asks, or calls shows up here automatically. Free CRM, built in.
+                </p>
+              ) : (
+                <div className="row">
+                  <div><b>{leadNew}</b><span>new</span></div>
+                  <div><b style={{ color: leadDue ? "#fb923c" : undefined }}>{leadDue}</b><span>follow-ups due</span></div>
+                  <div><b>{leadList.length}</b><span>total</span></div>
+                </div>
+              )}
+              <span style={{ color: "var(--color-brand2)", fontWeight: 800, fontSize: 14 }}>Open your leads →</span>
+            </Link>
           </section>
         )}
 
