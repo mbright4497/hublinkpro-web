@@ -611,3 +611,10 @@ a.crm-stat:hover { border-color: var(--color-brand2); transform: translateY(-1px
 
 .nav .signoutbtn { background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
 .nav .signoutbtn:hover { color: #fff; }
+
+.publishcard { background: rgba(37,99,235,.10); border: 1px solid rgba(96,165,250,.45); border-radius: 14px; padding: 18px 18px 20px; margin: 0 0 20px; }
+.publishcard h2 { margin: 0 0 6px; font-size: 20px; }
+.publishcard p { margin: 0 0 12px; font-size: 15px; line-height: 1.5; }
+.pubcheck { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; opacity: .85; }
+.pubcheck li.ok { color: #86efac; opacity: 1; }
+.publishcard .btn-ghost { display: inline-flex; align-items: center; text-decoration: none; }

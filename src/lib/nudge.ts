@@ -44,7 +44,7 @@ export function buildNudge(kind: "day1" | "day5", c: Candidate): { subject: stri
     return kind === "day1"
       ? {
           subject: "You're signed up. Your Channel is next",
-          text: `Hi,\n\nYou signed up for HubLinkPro but haven't built your Channel yet. It's a short form: your name, what you do, and a logo. Then you press Submit for review and I'll look it over and get you live.\n\nPick it back up here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
+          text: `Hi,\n\nYou signed up for HubLinkPro but haven't built your Channel yet. It's a short form: your name, what you do, and a logo. Then you press Publish my Channel and I'll take a quick look and get you live.\n\nPick it back up here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
         }
       : {
           subject: "Still want a Channel on HubLinkPro?",
@@ -57,10 +57,10 @@ export function buildNudge(kind: "day1" | "day5", c: Candidate): { subject: stri
   return kind === "day1"
     ? {
         subject: "Your HubLinkPro Channel is saved but not live yet",
-        text: `Hi,\n\nYou started your Channel on HubLinkPro${name} and it's saved. It isn't live yet, though. Nobody can see it until you press Submit for review at the bottom of the page.\n\n${miss ? miss + "\n\n" : ""}Finish it here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
+        text: `Hi,\n\nYou started your Channel on HubLinkPro${name} and it's saved. It isn't live yet, though. Nobody can see it until you press Publish my Channel on your dashboard.\n\n${miss ? miss + "\n\n" : ""}Finish it here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
       }
     : {
         subject: "Your Channel is still waiting",
-        text: `Hi,\n\nYour Channel${name} is still saved as a draft, so nobody can see it. When you're ready, press Submit for review here: ${link}\n\nIf you got stuck, reply and tell me where. If this isn't for you, use the link below and these emails stop.${foot}`,
+        text: `Hi,\n\nYour Channel${name} is still saved as a draft, so nobody can see it. When you're ready, press Publish my Channel here: ${link}\n\nIf you got stuck, reply and tell me where. If this isn't for you, use the link below and these emails stop.${foot}`,
       };
 }

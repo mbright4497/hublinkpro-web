@@ -91,7 +91,7 @@ export default function Login() {
       ? "Enter your email and password."
       : mode === "forgot"
         ? "Enter your email and we'll send you a link to set a new password."
-        : "Pick a password and you're in. Create and manage your HubLinkPro Channel.";
+        : "Free, and it takes about five minutes. 1) Make your login. 2) Add your name, what you do, and a logo. 3) Press Publish my Channel and we put you live.";
 
   return (
     <>

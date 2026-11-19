@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, saveSos, sosArrived, sosDone, truckGoLive, truckGoOffline } from "./actions";
+import { saveChannel, publishChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, saveSos, sosArrived, sosDone, truckGoLive, truckGoOffline } from "./actions";
 import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
@@ -29,10 +29,11 @@ const ERRORS: Record<string, string> = {
   save: "We couldn't save that. Try again.",
   location: "We couldn't read your location. Allow location access and try again.",
   notfound: "We couldn't find that Channel.",
+  publish: "Add your business name and pick what you do, then press Publish my Channel again.",
 };
 const STATUS_TEXT: Record<string, string> = {
   draft: "Draft — only you can see it",
-  pending: "In review — we'll publish it once it's verified",
+  pending: "Almost live — we're taking a quick look",
   live: "Live on HubLinkPro",
   paused: "Paused — not visible to the public",
 };
@@ -186,15 +187,36 @@ export default async function Dashboard({
         {sp.error && <p className="note">{ERRORS[sp.error] ?? "Something went wrong."}</p>}
         {sp.saved && <p className="note ok">Saved.</p>}
         {ch && ch.status === "draft" && !sp.submitted && (tab === "home" || tab === "look") && (
-          <p className="note">
-            <b>Your Channel isn&apos;t live yet.</b> It&apos;s saved as a draft and nobody can see it. Fill in what you can, then
-            press <b>Submit for review</b> at the bottom of{" "}
-            {tab === "look" ? "this page" : <Link href="/dashboard?tab=look" style={{ textDecoration: "underline" }}>Look &amp; basics</Link>}.
-          </p>
+          <section className="publishcard">
+            <h2>Your Channel isn&apos;t live yet</h2>
+            <p>
+              Right now only you can see it. When it looks good, press <b>Publish my Channel</b>. We take a quick
+              look, then it goes live, usually within a day. You can keep editing any time.
+            </p>
+            <ul className="pubcheck">
+              {[
+                ["Business name", !!ch.name?.trim()],
+                ["What you do", !!ch.network_id],
+                ["Logo", !!ch.logo_url],
+                ["Phone number", !!ch.phone],
+                ["Short tagline", !!ch.tagline],
+              ].map(([label, ok]) => (
+                <li key={String(label)} className={ok ? "ok" : ""}>{ok ? "✓" : "○"} {label}</li>
+              ))}
+            </ul>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <form action={publishChannel}>
+                <button className="btn-primary" type="submit">Publish my Channel</button>
+              </form>
+              {tab === "home" && (
+                <Link href="/dashboard?tab=look" className="btn-ghost">Add more first</Link>
+              )}
+            </div>
+          </section>
         )}
         {sp.submitted && (
           <p className="note ok">
-            Submitted. We&apos;ll verify your Channel and publish it. You&apos;ll keep full control of it.
+            You&apos;re in line to go live. We&apos;ll take a quick look and put it up, usually within a day. You can keep editing meanwhile.
           </p>
         )}
         {ch && (
@@ -647,7 +669,7 @@ export default async function Dashboard({
               <button className="btn-ghost" type="submit" name="intent" value="save">{!ch || ch.status === "draft" ? "Save draft" : "Save changes"}</button>
               {(!ch || ch.status === "draft") && (
                 <button className="btn-primary" type="submit" name="intent" value="submit">
-                  Submit for review
+                  Publish my Channel
                 </button>
               )}
             </div>
