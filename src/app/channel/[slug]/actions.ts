@@ -146,6 +146,7 @@ export async function bookSlot(formData: FormData) {
         (service ? `Service: ${service}\n` : "") +
         (ch.phone ? `\nNeed to change it? Call ${ch.phone}.\n` : "\nNeed to change it? Reply to the business directly.\n") +
         `\nSent through HubLinkPro.`,
+      log: { channelId: ch.id, label: "Booking confirmation to customer" },
     });
   }
   const to = await ownerEmail(ch.owner_id);
@@ -153,6 +154,7 @@ export async function bookSlot(formData: FormData) {
     await sendEmail({
       to,
       replyTo: email ?? undefined,
+      log: { channelId: ch.id, label: "New booking alert to owner" },
       subject: `New booking: ${name}, ${when}`,
       text:
         `${name} booked ${when} (${zone} time) on your HubLinkPro Channel.\n\n` +

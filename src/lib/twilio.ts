@@ -1,5 +1,6 @@
 // Twilio helpers: webhook signature check, TwiML, phone cleanup, SMS send (raw fetch, no SDK).
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { logMessage, type LogMeta } from "@/lib/msglog";
 
 // Twilio signs the exact public URL it called, so build it from a fixed base, not request headers.
 export const SITE_BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://hublinkpro.com").replace(/\/$/, "");
@@ -39,7 +40,13 @@ export function toE164(input: string): string | null {
   return null;
 }
 
-export async function sendSms(from: string, to: string, body: string): Promise<boolean> {
+export async function sendSms(from: string, to: string, body: string, log?: LogMeta): Promise<boolean> {
+  const ok = await deliverSms(from, to, body);
+  if (log) await logMessage({ ...log, medium: "sms", to, body, ok });
+  return ok;
+}
+
+async function deliverSms(from: string, to: string, body: string): Promise<boolean> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   if (!sid || !token) {

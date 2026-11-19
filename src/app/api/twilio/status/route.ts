@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   if (count) return done;
 
   const body = `Sorry we missed your call to ${ch.name}. Book a time or send details here: ${SITE_BASE}/channel/${ch.slug} Reply STOP to opt out.`;
-  if (await sendSms(ch.tracking_number, log.from_number, body)) {
+  if (await sendSms(ch.tracking_number, log.from_number, body, { channelId: log.channel_id, label: "Missed-call text to caller" })) {
     await db.from("call_logs").update({ texted: true }).eq("id", log.id);
   }
   return done;

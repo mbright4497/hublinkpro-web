@@ -61,7 +61,7 @@ export async function dispatchWave(requestId: number, wave: 1 | 2) {
       `${SITE_BASE}/api/twilio/sos-status?rid=${requestId}&cid=${p.id}`
     );
     await db.from("sos_dispatches").insert({ request_id: requestId, channel_id: p.id, wave, method: "call", call_sid: callSid });
-    await sendSms(from, p.forward_to, `HLP SOS: ${categoryLabel(r.category)} emergency in ${r.zip}. Answer our call and press 1-4 to take it (1=15 min, 2=30, 3=45, 4=60). First to accept wins. Reply STOP to opt out.`);
+    await sendSms(from, p.forward_to, `HLP SOS: ${categoryLabel(r.category)} emergency in ${r.zip}. Answer our call and press 1-4 to take it (1=15 min, 2=30, 3=45, 4=60). First to accept wins. Reply STOP to opt out.`, { channelId: p.id, label: "SOS alert text to pro" });
     sent++;
   }
   return sent;
