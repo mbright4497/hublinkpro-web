@@ -128,10 +128,10 @@ export async function emailCode(formData: FormData) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || !id) redirect("/admin?mailed=invalid");
   const { data: cd } = await supabase.from("promo_codes").select("code,months,active").eq("id", id).maybeSingle();
   if (!cd || !cd.active) redirect("/admin?mailed=invalid");
-  const { sendEmail } = await import("@/lib/notify");
+  const { sendEmail, SUPPORT_EMAIL } = await import("@/lib/notify");
   const ok = await sendEmail({
     to,
-    replyTo: ADMIN_EMAIL,
+    replyTo: SUPPORT_EMAIL,
     subject: "Your HubLinkPro Pro code",
     text:
       `Here's your founding code for HubLinkPro: ${cd.code}\n\n` +

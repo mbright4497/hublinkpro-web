@@ -5,6 +5,8 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 import { logMessage, type LogMeta } from "@/lib/msglog";
 
 // Sender is set in Vercel as RESEND_FROM (must be on a domain verified in Resend).
+// Replies to site emails go to the shared support inbox (an alias of contact@hublinkpro.com).
+export const SUPPORT_EMAIL = "support@hublinkpro.com";
 export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
 export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string; log?: LogMeta }) {
