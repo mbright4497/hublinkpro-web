@@ -1,6 +1,7 @@
 // Help-emails for half-finished signups. Server-only.
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { SITE_URL } from "@/lib/site";
+import { renderEmail, type EmailParts } from "@/lib/email-template";
 
 export type Candidate = {
   user_id: string;
@@ -35,20 +36,24 @@ function missingBits(c: Candidate): string {
   return `Right now it's missing ${list}. You can add those any time, even after it's live.`;
 }
 
-export function buildNudge(kind: "day1" | "day5", c: Candidate): { subject: string; text: string } {
+export function buildNudgeParts(kind: "day1" | "day5", c: Candidate): { subject: string; parts: EmailParts } {
   const link = `${SITE_URL}/dashboard`;
-  const opt = `${SITE_URL}/api/nudge/optout?u=${c.user_id}&s=${optoutSig(c.user_id)}`;
-  const foot = `\n\n— Matt Bright\nHubLinkPro, Johnson City, Tennessee\n\nDon't want these emails? ${opt}`;
+  const optoutUrl = `${SITE_URL}/api/nudge/optout?u=${c.user_id}&s=${optoutSig(c.user_id)}`;
+  const reply = "If something got in your way or didn't make sense, just reply to this email.";
 
   if (!c.has_channel) {
     return kind === "day1"
       ? {
           subject: "You're signed up. Your Channel is next",
-          text: `Hi,\n\nYou signed up for HubLinkPro but haven't built your Channel yet. It's a short form: your name, what you do, and a logo. Then you press Publish my Channel and I'll take a quick look and get you live.\n\nPick it back up here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
+          parts: { preheader: "It takes about five minutes.", heading: "Your Channel is next", optoutUrl,
+            paragraphs: ["You signed up for HubLinkPro but haven't built your Channel yet. It's a short form: your name, what you do, and a logo.", "Then press Publish my Channel and I'll take a quick look and get you live.", reply],
+            button: { label: "Build my Channel", url: link } },
         }
       : {
           subject: "Still want a Channel on HubLinkPro?",
-          text: `Hi,\n\nYour spot is still open. If you'd like to build your Channel, it's here: ${link}\n\nIf it isn't for you, no hard feelings. Just tell me what got in the way, or use the link below and these emails stop.${foot}`,
+          parts: { preheader: "Your spot is still open.", heading: "Your spot is still open", optoutUrl,
+            paragraphs: ["If you'd like to build your Channel, it only takes a few minutes.", "If it isn't for you, no hard feelings. Tell me what got in the way, or use the link at the bottom and these emails stop."],
+            button: { label: "Build my Channel", url: link } },
         };
   }
 
@@ -57,10 +62,19 @@ export function buildNudge(kind: "day1" | "day5", c: Candidate): { subject: stri
   return kind === "day1"
     ? {
         subject: "Your HubLinkPro Channel is saved but not live yet",
-        text: `Hi,\n\nYou started your Channel on HubLinkPro${name} and it's saved. It isn't live yet, though. Nobody can see it until you press Publish my Channel on your dashboard.\n\n${miss ? miss + "\n\n" : ""}Finish it here: ${link}\n\nIf something got in your way or didn't make sense, reply to this email. It comes straight to me.${foot}`,
+        parts: { preheader: "One button and it's on its way.", heading: "Your Channel is saved, not live yet", optoutUrl,
+          paragraphs: [`You started your Channel on HubLinkPro${name} and it's saved. Nobody can see it until you press Publish my Channel on your dashboard.`, ...(miss ? [miss] : []), reply],
+          button: { label: "Finish my Channel", url: link } },
       }
     : {
         subject: "Your Channel is still waiting",
-        text: `Hi,\n\nYour Channel${name} is still saved as a draft, so nobody can see it. When you're ready, press Publish my Channel here: ${link}\n\nIf you got stuck, reply and tell me where. If this isn't for you, use the link below and these emails stop.${foot}`,
+        parts: { preheader: "Press Publish and we'll take it from there.", heading: "Your Channel is still waiting", optoutUrl,
+          paragraphs: [`Your Channel${name} is still a draft, so nobody can see it. When you're ready, press Publish my Channel.`, "If you got stuck, reply and tell me where. If this isn't for you, use the link at the bottom and these emails stop."],
+          button: { label: "Publish my Channel", url: link } },
       };
+}
+
+export function buildNudge(kind: "day1" | "day5", c: Candidate): { subject: string; text: string; html: string } {
+  const { subject, parts } = buildNudgeParts(kind, c);
+  return { subject, ...renderEmail(parts) };
 }
