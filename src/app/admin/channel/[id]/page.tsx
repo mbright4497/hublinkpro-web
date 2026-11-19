@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
+import { emailSetup } from "../../actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Channel activity | HubLinkPro", robots: { index: false } };
@@ -63,6 +64,11 @@ export default async function ChannelActivity({ params }: { params: Promise<{ id
           {ch.status} · {ch.slug && <Link href={`/channel/${ch.slug}`}>/channel/{ch.slug}</Link>} · {items.length} item{items.length === 1 ? "" : "s"}.
           Emails and texts sent before {when("2026-11-19T12:00:00Z")} weren&apos;t logged, so older ones may be missing.
         </p>
+        <form action={emailSetup} style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "0 0 18px" }}>
+          <input type="hidden" name="id" value={ch.id} />
+          <input name="first_name" placeholder="Owner's first name" aria-label="Owner's first name" style={{ width: 170 }} />
+          <button className="btn-primary" type="submit">Email: you&apos;re set up</button>
+        </form>
         {items.length === 0 && <p className="lead">Nothing yet for this Channel.</p>}
         {items.map((it, i) => (
           <div key={i} className="autocard" style={{ marginBottom: 10 }}>
