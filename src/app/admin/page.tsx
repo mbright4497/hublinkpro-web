@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
+import { setChannelStatus, markMessageRead, saveNote, createCode, emailCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
@@ -42,8 +42,8 @@ function missing(s: Signup) {
   return m;
 }
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
-  const { f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
+export default async function Admin({ searchParams }: { searchParams: Promise<{ mailed?: string; f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
+  const { mailed = "", f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
@@ -134,6 +134,9 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
         <h1 style={{ marginTop: 32 }}>Founding codes</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Give a friend a code. They enter it on their dashboard and get Pro free for the months you set. It returns to Free on its own when the time is up.</p>
+        {mailed === "sent" && <p className="note ok">Code emailed from support@hublinkpro.com. Check Email delivery below.</p>}
+        {mailed === "failed" && <p className="note">The email didn&apos;t send. Check Email delivery below.</p>}
+        {mailed === "invalid" && <p className="note">Enter a valid email, and the code must be on.</p>}
         {codeMsg === "made" && <p className="note ok">Code created: <strong>{newCode}</strong></p>}
         {codeMsg === "dup" && <p className="note">That code already exists. Pick another.</p>}
         {codeMsg === "short" && <p className="note">Codes need at least 4 characters.</p>}
@@ -154,6 +157,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
               {!cd.active && <span className="statuspill" style={{ marginLeft: 6 }}>off</span>}
               <br /><span style={{ color: "var(--color-muted)", fontSize: 13 }}>{cd.label || "No label"} · {cd.months} months{cd.expires_at ? ` · code expires ${fmt(cd.expires_at)}` : ""}</span>
             </div>
+            <form action={emailCode} style={{ display: "flex", gap: 6 }}>
+              <input type="hidden" name="id" value={cd.id} />
+              <input name="to" type="email" required placeholder="Email this code to…" style={{ background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "8px 10px", minWidth: 180 }} />
+              <button className="btn-ghost" type="submit">Email</button>
+            </form>
             <form action={setCodeActive}>
               <input type="hidden" name="id" value={cd.id} />
               <input type="hidden" name="active" value={cd.active ? "0" : "1"} />

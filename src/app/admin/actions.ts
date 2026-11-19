@@ -117,3 +117,27 @@ export async function assignChannelMarket(formData: FormData) {
   revalidatePath("/admin");
   redirect("/admin?mkt=saved#markets");
 }
+
+// Emails a founding code from support@hublinkpro.com (the site's sender), logged so delivery shows in Admin.
+export async function emailCode(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.email !== ADMIN_EMAIL) redirect("/");
+  const to = String(formData.get("to") ?? "").trim();
+  const id = Number(formData.get("id"));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || !id) redirect("/admin?mailed=invalid");
+  const { data: cd } = await supabase.from("promo_codes").select("code,months,active").eq("id", id).maybeSingle();
+  if (!cd || !cd.active) redirect("/admin?mailed=invalid");
+  const { sendEmail } = await import("@/lib/notify");
+  const ok = await sendEmail({
+    to,
+    replyTo: ADMIN_EMAIL,
+    subject: "Your HubLinkPro Pro code",
+    text:
+      `Here's your founding code for HubLinkPro: ${cd.code}\n\n` +
+      `Sign in at https://hublinkpro.com/dashboard and enter it there. It gives you Pro free for ${cd.months} months, and it goes back to Free on its own when the time is up.\n\n` +
+      `If anything doesn't work, just reply to this email.\n\n— Matt Bright\nHubLinkPro, Johnson City, Tennessee`,
+    log: { label: "Founding code" },
+  });
+  redirect(`/admin?mailed=${ok ? "sent" : "failed"}`);
+}
