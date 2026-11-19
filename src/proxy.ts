@@ -47,7 +47,16 @@ export async function proxy(request: NextRequest) {
       },
     },
   });
-  await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
+  // Someone who is already signed in never needs the sign-in form: the "Build your Channel" buttons all point at
+  // /login, so without this they get asked to sign in again after leaving the dashboard. A failed email link
+  // (?error) still shows the form so they can see what went wrong.
+  if (user && request.nextUrl.pathname === "/login" && !request.nextUrl.searchParams.has("error")) {
+    const home = NextResponse.redirect(new URL("/dashboard", request.url), 307);
+    response.cookies.getAll().forEach((c) => home.cookies.set(c));
+    home.headers.set("Cache-Control", "private, no-store");
+    return home;
+  }
   return response;
 }
 
