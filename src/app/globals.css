@@ -599,3 +599,12 @@ a.crm-stat:hover { border-color: var(--color-brand2); transform: translateY(-1px
   .crm-row .rt { align-items: flex-start; text-align: left; flex-basis: 100%; }
   .crm h1 { font-size: 26px; }
 }
+
+/* Dashboard section bar: one row of links that scrolls sideways on a phone and stays put while you scroll. */
+.dtabs { position: sticky; top: 0; z-index: 20; display: flex; gap: 4px; overflow-x: auto; margin: 6px -4px 22px; padding: 10px 4px; background: color-mix(in srgb, var(--color-ink, #061021) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--color-line); scrollbar-width: none; }
+.dtabs::-webkit-scrollbar { display: none; }
+.dtabs a { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; border-radius: 999px; border: 1px solid var(--color-line); color: var(--color-muted); font-weight: 700; font-size: 13.5px; text-decoration: none; white-space: nowrap; transition: color .15s, border-color .15s, background .15s; }
+.dtabs a:hover { color: #fff; border-color: var(--color-brand2); }
+.dtabs a.on { background: var(--color-brand2); border-color: var(--color-brand2); color: #fff; }
+.dtabs .dbadge { background: rgba(255,255,255,.2); border-radius: 999px; padding: 1px 8px; font-size: 12px; font-weight: 800; }
+.dtabs a:not(.on) .dbadge { background: var(--color-brand2); color: #fff; }

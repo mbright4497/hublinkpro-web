@@ -166,7 +166,7 @@ export async function setRequestStatus(formData: FormData) {
   if (!Number.isInteger(id) || !["new", "contacted", "booked", "closed"].includes(status)) redirect("/dashboard");
   // RLS limits this to requests on the signed-in owner's own Channel.
   await supabase.from("booking_requests").update({ status }).eq("id", id);
-  redirect("/dashboard#requests");
+  redirect("/dashboard?tab=schedule#requests");
 }
 
 export async function addPortfolioItem(formData: FormData) {
@@ -275,7 +275,7 @@ export async function cancelBooking(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) redirect("/dashboard#bookings");
+  if (!Number.isInteger(id)) redirect("/dashboard?tab=schedule#bookings");
   // RLS limits this to bookings on the signed-in owner's own Channel.
   await supabase.from("bookings").update({ status: "cancelled" }).eq("id", id).eq("status", "confirmed");
   redirect("/dashboard?cal=cancelled#bookings");
@@ -333,7 +333,7 @@ async function ownedSosJob(formData: FormData) {
   const { data: ch } = await supabase.from("channels").select("id").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
   const id = Number(formData.get("id"));
   const db = supabaseAdmin();
-  if (!ch || !db || !Number.isInteger(id)) redirect("/dashboard#sos");
+  if (!ch || !db || !Number.isInteger(id)) redirect("/dashboard?tab=schedule#sos");
   return { db, id, channelId: ch.id };
 }
 
@@ -360,22 +360,22 @@ export async function truckGoLive(formData: FormData) {
   if (!user) redirect("/login");
   const { data: ch } = await supabase
     .from("channels").select("id,is_food_truck").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
-  if (!ch || !ch.is_food_truck) redirect("/dashboard?error=save");
+  if (!ch || !ch.is_food_truck) redirect("/dashboard?tab=work&error=save");
 
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
   const hours = Math.min(12, Math.max(1, Math.round(Number(formData.get("hours")) || 4)));
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-    redirect("/dashboard?error=location");
+    redirect("/dashboard?tab=work&error=location");
   }
   const note = String(formData.get("note") ?? "").trim().slice(0, 120) || null;
   const { error } = await supabase.from("truck_locations").upsert(
     { channel_id: ch.id, lat, lng, note, live_until: new Date(Date.now() + hours * 3_600_000).toISOString(), updated_at: new Date().toISOString() },
     { onConflict: "channel_id" },
   );
-  if (error) redirect("/dashboard?error=save");
+  if (error) redirect("/dashboard?tab=work&error=save");
   revalidatePath("/food-trucks");
-  redirect("/dashboard?truck=live#truck");
+  redirect("/dashboard?tab=work&truck=live#truck");
 }
 
 export async function truckGoOffline() {
@@ -386,5 +386,5 @@ export async function truckGoOffline() {
     .from("channels").select("id").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
   if (ch) await supabase.from("truck_locations").delete().eq("channel_id", ch.id);
   revalidatePath("/food-trucks");
-  redirect("/dashboard?truck=off#truck");
+  redirect("/dashboard?tab=work&truck=off#truck");
 }
