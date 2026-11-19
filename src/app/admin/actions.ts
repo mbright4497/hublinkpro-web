@@ -129,15 +129,8 @@ export async function emailCode(formData: FormData) {
   const { data: cd } = await supabase.from("promo_codes").select("code,months,active").eq("id", id).maybeSingle();
   if (!cd || !cd.active) redirect("/admin?mailed=invalid");
   const { sendEmail, SUPPORT_EMAIL } = await import("@/lib/notify");
-  const ok = await sendEmail({
-    to,
-    replyTo: SUPPORT_EMAIL,
-    subject: "Your HubLinkPro Pro code",
-    text:
-      `Here's your founding code for HubLinkPro: ${cd.code}\n\n` +
-      `Sign in at https://hublinkpro.com/dashboard and enter it there. It gives you Pro free for ${cd.months} months, and it goes back to Free on its own when the time is up.\n\n` +
-      `If anything doesn't work, just reply to this email.\n\n— Matt Bright\nHubLinkPro, Johnson City, Tennessee`,
-    log: { label: "Founding code" },
-  });
+  const { renderEmail, codeEmail } = await import("@/lib/email-template");
+  const { subject, parts } = codeEmail({ code: cd.code, months: cd.months });
+  const ok = await sendEmail({ to, replyTo: SUPPORT_EMAIL, subject, ...renderEmail(parts), log: { label: "Founding code" } });
   redirect(`/admin?mailed=${ok ? "sent" : "failed"}`);
 }

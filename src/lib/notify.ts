@@ -9,13 +9,13 @@ import { logMessage, type LogMeta } from "@/lib/msglog";
 export const SUPPORT_EMAIL = "support@hublinkpro.com";
 export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
-export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string; log?: LogMeta }) {
+export async function sendEmail(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string; log?: LogMeta }) {
   const { ok, id } = await deliver(opts);
   await logMessage({ ...(opts.log ?? { label: "Email" }), medium: "email", to: opts.to, subject: opts.subject, body: opts.text, ok, resendId: id });
   return ok;
 }
 
-async function deliver(opts: { to: string; subject: string; text: string; replyTo?: string }): Promise<{ ok: boolean; id: string | null }> {
+async function deliver(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string }): Promise<{ ok: boolean; id: string | null }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[HLP-EMAIL] skipped: RESEND_API_KEY is not set in this deployment");
@@ -30,6 +30,7 @@ async function deliver(opts: { to: string; subject: string; text: string; replyT
         to: [opts.to],
         subject: opts.subject,
         text: opts.text,
+        ...(opts.html ? { html: opts.html } : {}),
         ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
       }),
     });
