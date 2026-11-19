@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { HouseStage } from "@/lib/channels";
+import { useSignedIn } from "@/components/AuthNav";
 
 // Full-bleed cinematic opener. Plays the house Channel video muted behind the headline.
 // A portrait clip (phone video) becomes a tall framed screen on the right instead of being
@@ -11,6 +12,7 @@ export default function Billboard({ stage, eyebrow }: { stage: HouseStage | null
   const ref = useRef<HTMLVideoElement>(null);
   const [portrait, setPortrait] = useState(false);
   const [ready, setReady] = useState(false);
+  const signedIn = useSignedIn();
   const [muted, setMuted] = useState(true);
   const [failed, setFailed] = useState(false);
   const src = stage?.videoFile ?? null;
@@ -65,7 +67,11 @@ export default function Billboard({ stage, eyebrow }: { stage: HouseStage | null
           </Link>
         </div>
         <p className="bb-signin">
-          Already have a Channel? <Link href="/login?mode=signin">Sign in</Link>
+          {signedIn ? (
+            <>You&apos;re signed in. <Link href="/dashboard">Go to your dashboard</Link></>
+          ) : (
+            <>Already have a Channel? <Link href="/login?mode=signin">Sign in</Link></>
+          )}
         </p>
       </div>
 

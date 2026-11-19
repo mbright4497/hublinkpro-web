@@ -5,6 +5,7 @@ import { NETWORKS, type Business } from "@/lib/data";
 import { localChannels, houseStage } from "@/lib/channels";
 import { getPosts } from "@/lib/blog";
 import Billboard from "@/components/Billboard";
+import { NavSignIn, NavCta } from "@/components/AuthNav";
 import HouseStartCard from "@/components/HouseStartCard";
 import type { Market } from "@/lib/markets";
 import { SITE_SOCIALS } from "@/lib/site";
@@ -59,15 +60,11 @@ function Nav({ market }: { market: Market }) {
       <Link href="/choose-area" className="signin" aria-label={`Area: ${market.name}. Change`}>
         📍 {market.name}
       </Link>
-      <Link href="/login?mode=signin" className="signin">
-        Sign in
-      </Link>
+      <NavSignIn />
       <Link href="/sos" className="sosbtn" aria-label="Home emergency? Get a pro now">
         🚨 Home emergency
       </Link>
-      <Link href="/login" className="listbtn">
-        Build your Channel
-      </Link>
+      <NavCta />
     </nav>
   );
 }
