@@ -31,7 +31,9 @@ async function marketRedirect(request: NextRequest) {
   return next;
 }
 
-// Keeps the Supabase session cookie fresh on the routes that need a login, and routes the homepage by market.
+// Keeps the Supabase session cookie fresh on every route that reads the login (the Channel page checks for the owner),
+// and routes the homepage by market. A page that reads the login but isn't listed here refreshes it without being able
+// to save the new one, which signs the owner out on their next dashboard visit.
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/") return marketRedirect(request);
   let response = NextResponse.next({ request });
@@ -49,4 +51,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/login", "/auth/:path*"] };
+export const config = { matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/channel/:path*", "/login", "/auth/:path*"] };
