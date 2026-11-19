@@ -151,6 +151,22 @@ export async function saveChannel(formData: FormData) {
   redirect(status === "pending" ? "/dashboard?submitted=1" : "/dashboard?saved=1");
 }
 
+// One-tap publish from the dashboard Home tab: the same "pending" step as the form's publish button,
+// without making the owner scroll a long form. Only a name and a category are required to go in line.
+export async function publishChannel() {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ch } = await supabase.from("channels").select("id,name,network_id,status").eq("owner_id", user.id).order("id").limit(1).maybeSingle();
+  if (!ch) redirect("/dashboard?tab=look");
+  if (ch.status !== "draft") redirect("/dashboard");
+  if (!ch.name?.trim() || !ch.network_id) redirect("/dashboard?tab=look&error=publish");
+  const { error } = await supabase.from("channels").update({ status: "pending" }).eq("id", ch.id);
+  if (error) redirect("/dashboard?error=save");
+  revalidatePath("/dashboard");
+  redirect("/dashboard?submitted=1");
+}
+
 export async function signOut() {
   const supabase = await supabaseServer();
   await supabase.auth.signOut();
