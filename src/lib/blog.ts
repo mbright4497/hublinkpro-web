@@ -1,59 +1,48 @@
-// Blog posts are markdown files in /content/blog, named YYYY-MM-DD-slug.md.
-// Frontmatter: title, description, service (optional), draft (optional, true = hidden in production).
-import fs from "node:fs";
-import path from "node:path";
+// Blog posts live in the blog_posts table and are written from /admin/blog.
+// Public reads go through plain REST with a 60s revalidate (RLS only exposes published rows),
+// so /blog stays cacheable. The admin editor uses the signed-in client and sees drafts too.
 import { marked } from "marked";
-
-const DIR = path.join(process.cwd(), "content", "blog");
+import { SUPABASE_URL, SUPABASE_KEY } from "@/lib/supabase/env";
 
 export type Post = {
   slug: string;
   title: string;
   description: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD, Eastern time
   service: string | null;
-  draft: boolean;
   body: string;
 };
 
-function parse(file: string): Post | null {
-  const m = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
-  if (!m) return null;
-  const raw = fs.readFileSync(path.join(DIR, file), "utf8");
-  const fm = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-  if (!fm) return null;
-  const meta: Record<string, string> = {};
-  for (const line of fm[1].split(/\r?\n/)) {
-    const i = line.indexOf(":");
-    if (i > 0) meta[line.slice(0, i).trim()] = line.slice(i + 1).trim().replace(/^["']|["']$/g, "");
+type Row = { slug: string; title: string; description: string; service: string | null; body: string; published_at: string | null };
+
+const toPost = (r: Row): Post => ({
+  slug: r.slug,
+  title: r.title,
+  description: r.description,
+  service: r.service,
+  body: r.body,
+  date: new Date(r.published_at ?? Date.now()).toLocaleDateString("en-CA", { timeZone: "America/New_York" }),
+});
+
+async function query(qs: string): Promise<Post[]> {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return [];
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?select=slug,title,description,service,body,published_at&published=eq.true&${qs}`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return [];
+    return ((await res.json()) as Row[]).map(toPost);
+  } catch {
+    return [];
   }
-  if (!meta.title || !meta.description) return null;
-  return {
-    slug: m[2],
-    title: meta.title,
-    description: meta.description,
-    date: m[1],
-    service: meta.service || null,
-    draft: meta.draft === "true",
-    body: fm[2],
-  };
 }
 
-// Drafts show on Vercel previews and locally, never on production.
-const showDrafts = () => process.env.VERCEL_ENV !== "production";
+export const getPosts = () => query("order=published_at.desc");
+export const getPost = async (slug: string) => (await query(`slug=eq.${encodeURIComponent(slug)}&limit=1`))[0];
 
-export function getPosts(): Post[] {
-  if (!fs.existsSync(DIR)) return [];
-  return fs
-    .readdirSync(DIR)
-    .map(parse)
-    .filter((p): p is Post => !!p && (showDrafts() || !p.draft))
-    .sort((a, b) => b.date.localeCompare(a.date));
-}
-
-export const getPost = (slug: string) => getPosts().find((p) => p.slug === slug);
-
-export const renderPost = (p: Post) => marked.parse(p.body, { async: false }) as string;
+export const renderMarkdown = (md: string) => marked.parse(md, { async: false }) as string;
+export const renderPost = (p: Post) => renderMarkdown(p.body);
 
 export const prettyDate = (d: string) =>
   new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" });

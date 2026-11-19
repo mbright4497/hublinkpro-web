@@ -8,6 +8,7 @@ export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const channels = await liveChannels();
+  const posts = await getPosts();
 
   // Only list category pages that actually have a live Channel; empty ones are thin content.
   const activeNetworks = new Set(channels.filter((c) => !c.house).map((c) => c.networkId));
@@ -17,8 +18,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/list-your-business`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/food-trucks`, changeFrequency: "hourly", priority: 0.7 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.3 },
-    ...(getPosts().length ? [{ url: `${SITE_URL}/blog`, changeFrequency: "daily" as const, priority: 0.6 }] : []),
-    ...getPosts().map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: p.date, changeFrequency: "monthly" as const, priority: 0.6 })),
+    ...(posts.length ? [{ url: `${SITE_URL}/blog`, changeFrequency: "daily" as const, priority: 0.6 }] : []),
+    ...posts.map((p) => ({ url: `${SITE_URL}/blog/${p.slug}`, lastModified: p.date, changeFrequency: "monthly" as const, priority: 0.6 })),
     ...NETWORKS.filter((n) => activeNetworks.has(n.id)).map((n) => ({
       url: `${SITE_URL}/network/${n.slug}`,
       changeFrequency: "daily" as const,

@@ -100,7 +100,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     <>
       <nav className="nav">
         <Link href="/" className="brand"><span className="logo">H</span><span>HubLink<span className="pro">Pro</span></span></Link>
-        <span style={{ color: "var(--color-muted)" }}>Admin · {signups.length} signups</span>
+        <span style={{ color: "var(--color-muted)" }}>Admin · {signups.length} signups · <Link href="/admin/blog">Blog</Link></span>
         <span />
       </nav>
       <div className="page" style={{ maxWidth: 900 }}>

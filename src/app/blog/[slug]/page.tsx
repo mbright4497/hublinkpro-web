@@ -1,31 +1,26 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPost, getPosts, prettyDate, renderPost } from "@/lib/blog";
+import { getPost, prettyDate, renderPost } from "@/lib/blog";
 import { SITE_URL, jsonLd } from "@/lib/site";
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return getPosts().map((p) => ({ slug: p.slug }));
-}
+export const revalidate = 60;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const p = getPost(slug);
+  const p = await getPost(slug);
   if (!p) return {};
   return {
     title: `${p.title} · HubLinkPro`,
     description: p.description,
     alternates: { canonical: `${SITE_URL}/blog/${p.slug}` },
     openGraph: { title: p.title, description: p.description, type: "article", publishedTime: p.date },
-    robots: p.draft ? { index: false, follow: false } : undefined,
   };
 }
 
 export default async function BlogPost({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const p = getPost(slug);
+  const p = await getPost(slug);
   if (!p) notFound();
   return (
     <>
@@ -54,7 +49,7 @@ export default async function BlogPost({ params }: { params: Promise<{ slug: str
             }),
           }}
         />
-        <p className="pdate">{prettyDate(p.date)}{p.draft ? " · DRAFT (hidden on hublinkpro.com)" : ""}</p>
+        <p className="pdate">{prettyDate(p.date)}</p>
         <h1>{p.title}</h1>
         <div className="postbody" dangerouslySetInnerHTML={{ __html: renderPost(p) }} />
         <aside className="postcta">
