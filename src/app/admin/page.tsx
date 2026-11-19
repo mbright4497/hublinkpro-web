@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ADMIN_EMAIL } from "@/lib/supabase/env";
-import { setChannelStatus, markMessageRead, saveNote, createCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { setChannelStatus, markMessageRead, saveNote, createCode, emailCode, setCodeActive, assignTrackingNumber, setMarketLaunched, assignChannelMarket } from "./actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin | HubLinkPro", robots: { index: false } };
@@ -41,8 +42,8 @@ function missing(s: Signup) {
   return m;
 }
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
-  const { f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
+export default async function Admin({ searchParams }: { searchParams: Promise<{ mailed?: string; f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
+  const { mailed = "", f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
@@ -77,6 +78,23 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     saved: "Tracking number saved.", invalid: "Enter a Channel slug and a 10-digit US number.",
     taken: "That number is already assigned to another Channel.", noslug: "No Channel has that slug.", error: "Couldn't save. Try again.",
   };
+  // Email delivery check: last 12 logged emails, with live status from Resend (delivered / bounced / ...).
+  const adb = supabaseAdmin();
+  const { data: sentRows } = adb
+    ? await adb.from("message_log").select("to_addr,subject,label,ok,resend_id,created_at").eq("medium", "email").order("created_at", { ascending: false }).limit(12)
+    : { data: null };
+  const rkey = process.env.RESEND_API_KEY;
+  const sent = await Promise.all((sentRows ?? []).map(async (r) => {
+    let status = r.ok ? "sent (status unavailable)" : "FAILED to send";
+    if (r.ok && r.resend_id && rkey) {
+      try {
+        const res = await fetch(`https://api.resend.com/emails/${r.resend_id}`, { headers: { Authorization: `Bearer ${rkey}` }, cache: "no-store", signal: AbortSignal.timeout(4000) });
+        if (res.ok) status = ((await res.json()) as { last_event?: string }).last_event ?? status;
+        else status = `sent (Resend lookup ${res.status})`;
+      } catch { /* leave default */ }
+    }
+    return { ...r, status };
+  }));
   const unread = (messages ?? []).filter((m) => !m.read).length;
   return (
     <>
@@ -86,7 +104,20 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <span />
       </nav>
       <div className="page" style={{ maxWidth: 900 }}>
-        <h1>Recently added</h1>
+        <h1>Email delivery</h1>
+        <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Last 12 emails the site sent. &ldquo;delivered&rdquo; means the inbox provider accepted it. &ldquo;bounced&rdquo; or &ldquo;FAILED&rdquo; means it did not arrive.</p>
+        {sent.length === 0 && <p className="lead" style={{ fontSize: 14 }}>No emails logged yet.</p>}
+        {sent.map((m, i) => (
+          <div key={i} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div>
+              <strong>{m.label}</strong> → {m.to_addr}<br />
+              <span style={{ color: "var(--color-muted)", fontSize: 13 }}>{m.subject} · {new Date(m.created_at).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</span>
+            </div>
+            <span className="statuspill">{m.status}</span>
+          </div>
+        ))}
+
+        <h1 style={{ marginTop: 32 }}>Recently added</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Newest signups first. &ldquo;New&rdquo; means in the last 3 days.</p>
         {[...signups].sort((a, b) => +new Date(b.signed_up_at) - +new Date(a.signed_up_at)).slice(0, 8).map((s) => (
           <div key={s.user_id} className="autocard" style={{ marginBottom: 8, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", justifyContent: "space-between" }}>
@@ -103,6 +134,9 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
 
         <h1 style={{ marginTop: 32 }}>Founding codes</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Give a friend a code. They enter it on their dashboard and get Pro free for the months you set. It returns to Free on its own when the time is up.</p>
+        {mailed === "sent" && <p className="note ok">Code emailed from support@hublinkpro.com. Check Email delivery below.</p>}
+        {mailed === "failed" && <p className="note">The email didn&apos;t send. Check Email delivery below.</p>}
+        {mailed === "invalid" && <p className="note">Enter a valid email, and the code must be on.</p>}
         {codeMsg === "made" && <p className="note ok">Code created: <strong>{newCode}</strong></p>}
         {codeMsg === "dup" && <p className="note">That code already exists. Pick another.</p>}
         {codeMsg === "short" && <p className="note">Codes need at least 4 characters.</p>}
@@ -123,6 +157,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
               {!cd.active && <span className="statuspill" style={{ marginLeft: 6 }}>off</span>}
               <br /><span style={{ color: "var(--color-muted)", fontSize: 13 }}>{cd.label || "No label"} · {cd.months} months{cd.expires_at ? ` · code expires ${fmt(cd.expires_at)}` : ""}</span>
             </div>
+            <form action={emailCode} style={{ display: "flex", gap: 6 }}>
+              <input type="hidden" name="id" value={cd.id} />
+              <input name="to" type="email" required placeholder="Email this code to…" style={{ background: "var(--color-ink)", color: "#fff", border: "1px solid var(--color-line)", borderRadius: 8, padding: "8px 10px", minWidth: 180 }} />
+              <button className="btn-ghost" type="submit">Email</button>
+            </form>
             <form action={setCodeActive}>
               <input type="hidden" name="id" value={cd.id} />
               <input type="hidden" name="active" value={cd.active ? "0" : "1"} />

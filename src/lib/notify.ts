@@ -8,16 +8,16 @@ import { logMessage, type LogMeta } from "@/lib/msglog";
 export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
 export async function sendEmail(opts: { to: string; subject: string; text: string; replyTo?: string; log?: LogMeta }) {
-  const ok = await deliver(opts);
-  if (opts.log) await logMessage({ ...opts.log, medium: "email", to: opts.to, subject: opts.subject, body: opts.text, ok });
+  const { ok, id } = await deliver(opts);
+  await logMessage({ ...(opts.log ?? { label: "Email" }), medium: "email", to: opts.to, subject: opts.subject, body: opts.text, ok, resendId: id });
   return ok;
 }
 
-async function deliver(opts: { to: string; subject: string; text: string; replyTo?: string }) {
+async function deliver(opts: { to: string; subject: string; text: string; replyTo?: string }): Promise<{ ok: boolean; id: string | null }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[HLP-EMAIL] skipped: RESEND_API_KEY is not set in this deployment");
-    return false;
+    return { ok: false, id: null };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -33,10 +33,11 @@ async function deliver(opts: { to: string; subject: string; text: string; replyT
     });
     if (!res.ok) console.error("[HLP-EMAIL] resend failed", res.status, (await res.text()).slice(0, 300));
     else console.log("[HLP-EMAIL] sent:", opts.subject);
-    return res.ok;
+    const id = res.ok ? ((await res.json().catch(() => ({}))) as { id?: string }).id ?? null : null;
+    return { ok: res.ok, id };
   } catch (e) {
     console.error("[HLP-EMAIL] error", String(e));
-    return false;
+    return { ok: false, id: null };
   }
 }
 

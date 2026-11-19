@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export type LogMeta = { channelId?: number | null; userId?: string | null; label: string };
 
-export async function logMessage(m: LogMeta & { medium: "email" | "sms"; to: string; subject?: string; body: string; ok: boolean }) {
+export async function logMessage(m: LogMeta & { medium: "email" | "sms"; to: string; subject?: string; body: string; ok: boolean; resendId?: string | null }) {
   try {
     const db = supabaseAdmin();
     if (!db) return;
@@ -17,6 +17,7 @@ export async function logMessage(m: LogMeta & { medium: "email" | "sms"; to: str
       subject: m.subject ?? null,
       body: m.body.slice(0, 2000),
       ok: m.ok,
+      resend_id: m.resendId ?? null,
     });
   } catch (e) {
     console.error("[HLP-LOG] failed", String(e));
