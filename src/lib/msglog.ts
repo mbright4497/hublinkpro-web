@@ -7,8 +7,8 @@ export type LogMeta = { channelId?: number | null; userId?: string | null; label
 export async function logMessage(m: LogMeta & { medium: "email" | "sms"; to: string; subject?: string; body: string; ok: boolean; resendId?: string | null }) {
   try {
     const db = supabaseAdmin();
-    if (!db) return;
-    await db.from("message_log").insert({
+    if (!db) { console.error("[HLP-LOG] skipped: SUPABASE_SERVICE_ROLE_KEY is not set"); return; }
+    const { error } = await db.from("message_log").insert({
       channel_id: m.channelId ?? null,
       user_id: m.userId ?? null,
       medium: m.medium,
@@ -19,6 +19,7 @@ export async function logMessage(m: LogMeta & { medium: "email" | "sms"; to: str
       ok: m.ok,
       resend_id: m.resendId ?? null,
     });
+    if (error) console.error("[HLP-LOG] insert failed:", error.message);
   } catch (e) {
     console.error("[HLP-LOG] failed", String(e));
   }

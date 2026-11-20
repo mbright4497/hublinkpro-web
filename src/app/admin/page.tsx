@@ -42,8 +42,8 @@ function missing(s: Signup) {
   return m;
 }
 
-export default async function Admin({ searchParams }: { searchParams: Promise<{ mailed?: string; f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
-  const { mailed = "", f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
+export default async function Admin({ searchParams }: { searchParams: Promise<{ mailed?: string; why?: string; f?: string; q?: string; code?: string; c?: string; trk?: string; mkt?: string }> }) {
+  const { mailed = "", why = "", f = "all", q = "", code: codeMsg = "", c: newCode = "", trk = "", mkt = "" } = await searchParams;
   const supabase = await supabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.email !== ADMIN_EMAIL) notFound();
@@ -135,7 +135,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         <h1 style={{ marginTop: 32 }}>Founding codes</h1>
         <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>Give a friend a code. They enter it on their dashboard and get Pro free for the months you set. It returns to Free on its own when the time is up.</p>
         {mailed === "sent" && <p className="note ok">Email sent from support@hublinkpro.com. Check Email delivery below.</p>}
-        {mailed === "failed" && <p className="note">The email didn&apos;t send. Check Email delivery below.</p>}
+        {mailed === "failed" && <p className="note">The email didn&apos;t send.{why ? ` Reason: ${why}` : ""} Check Email delivery below.</p>}
         {mailed === "invalid" && <p className="note">Enter a valid email, and the code must be on.</p>}
         {codeMsg === "made" && <p className="note ok">Code created: <strong>{newCode}</strong></p>}
         {codeMsg === "dup" && <p className="note">That code already exists. Pick another.</p>}

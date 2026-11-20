@@ -10,16 +10,21 @@ export const SUPPORT_EMAIL = "support@hublinkpro.com";
 export const FROM = process.env.RESEND_FROM || "HubLinkPro <support@hublinkpro.com>";
 
 export async function sendEmail(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string; log?: LogMeta }) {
-  const { ok, id } = await deliver(opts);
-  await logMessage({ ...(opts.log ?? { label: "Email" }), medium: "email", to: opts.to, subject: opts.subject, body: opts.text, ok, resendId: id });
-  return ok;
+  return (await sendEmailDetailed(opts)).ok;
 }
 
-async function deliver(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string }): Promise<{ ok: boolean; id: string | null }> {
+// Same as sendEmail but also says why it failed, so Admin can show the real reason.
+export async function sendEmailDetailed(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string; log?: LogMeta }) {
+  const { ok, id, error } = await deliver(opts);
+  await logMessage({ ...(opts.log ?? { label: "Email" }), medium: "email", to: opts.to, subject: opts.subject, body: ok ? opts.text : `${opts.text}\n\n[send failed: ${error ?? "unknown"}]`, ok, resendId: id });
+  return { ok, id, error };
+}
+
+async function deliver(opts: { to: string; subject: string; text: string; html?: string; replyTo?: string }): Promise<{ ok: boolean; id: string | null; error?: string }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.warn("[HLP-EMAIL] skipped: RESEND_API_KEY is not set in this deployment");
-    return { ok: false, id: null };
+    return { ok: false, id: null, error: "RESEND_API_KEY is not set on this deployment" };
   }
   try {
     const res = await fetch("https://api.resend.com/emails", {
@@ -34,13 +39,16 @@ async function deliver(opts: { to: string; subject: string; text: string; html?:
         ...(opts.replyTo ? { reply_to: opts.replyTo } : {}),
       }),
     });
-    if (!res.ok) console.error("[HLP-EMAIL] resend failed", res.status, (await res.text()).slice(0, 300));
-    else console.log("[HLP-EMAIL] sent:", opts.subject);
+    let errText: string | undefined;
+    if (!res.ok) {
+      errText = `Resend ${res.status}: ${(await res.text()).slice(0, 300)}`;
+      console.error("[HLP-EMAIL] resend failed", errText);
+    } else console.log("[HLP-EMAIL] sent:", opts.subject);
     const id = res.ok ? ((await res.json().catch(() => ({}))) as { id?: string }).id ?? null : null;
-    return { ok: res.ok, id };
+    return { ok: res.ok, id, error: errText };
   } catch (e) {
     console.error("[HLP-EMAIL] error", String(e));
-    return { ok: false, id: null };
+    return { ok: false, id: null, error: String(e).slice(0, 200) };
   }
 }
 
