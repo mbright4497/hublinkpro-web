@@ -146,12 +146,12 @@ export async function emailSetup(formData: FormData) {
   if (!id) redirect("/admin?mailed=invalid");
   const { supabaseAdmin } = await import("@/lib/supabase/admin");
   const db = supabaseAdmin();
-  if (!db) redirect("/admin?mailed=failed");
+  if (!db) redirect(`/admin?mailed=failed&why=${encodeURIComponent("SUPABASE_SERVICE_ROLE_KEY is not set on this deployment")}`);
   const { data: ch } = await db.from("channels").select("name,owner_id,status,comp_code_id").eq("id", id).maybeSingle();
   if (!ch) redirect("/admin?mailed=invalid");
-  const { sendEmail, ownerEmail, SUPPORT_EMAIL } = await import("@/lib/notify");
+  const { sendEmailDetailed, ownerEmail, SUPPORT_EMAIL } = await import("@/lib/notify");
   const to = await ownerEmail(ch.owner_id);
-  if (!to) redirect("/admin?mailed=failed");
+  if (!to) redirect(`/admin?mailed=failed&why=${encodeURIComponent("Could not look up the owner's email address")}`);
   let months: number | undefined;
   if (ch.comp_code_id) {
     const { data: pc } = await db.from("promo_codes").select("months").eq("id", ch.comp_code_id).maybeSingle();
@@ -159,6 +159,6 @@ export async function emailSetup(formData: FormData) {
   }
   const { renderEmail, setupEmail } = await import("@/lib/email-template");
   const { subject, parts } = setupEmail({ name: first || undefined, channelName: ch.status === "pending" ? ch.name : undefined, codeMonths: months });
-  const ok = await sendEmail({ to, replyTo: SUPPORT_EMAIL, subject, ...renderEmail(parts), log: { label: "Setup email" } });
-  redirect(`/admin?mailed=${ok ? "sent" : "failed"}`);
+  const r = await sendEmailDetailed({ to, replyTo: SUPPORT_EMAIL, subject, ...renderEmail(parts), log: { label: "Setup email", channelId: id, userId: ch.owner_id } });
+  redirect(r.ok ? "/admin?mailed=sent" : `/admin?mailed=failed&why=${encodeURIComponent(r.error ?? "unknown")}`);
 }
