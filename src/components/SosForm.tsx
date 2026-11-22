@@ -1,13 +1,13 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { SOS_CATEGORIES } from "@/lib/sos-categories";
+import CodeEntry from "@/components/CodeEntry";
 
 export default function SosForm() {
-  const router = useRouter();
   const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [token, setToken] = useState("");
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,10 +24,19 @@ export default function SosForm() {
       });
       const j = await res.json();
       if (!res.ok) { setErr(j.error ?? "Something went wrong."); setBusy(false); return; }
-      router.push(`/sos/${j.token}`);
+      setToken(j.token); setBusy(false);
     } catch {
       setErr("Network problem. Try again, or call a pro directly."); setBusy(false);
     }
+  }
+
+  if (token) {
+    return (
+      <>
+        <CodeEntry token={token} doneHref={`/sos/${token}`} />
+        <p style={{ fontSize: 12, opacity: 0.75, marginTop: 12 }}>Life-threatening emergency, gas smell, fire, or live wires? Call 911 first.</p>
+      </>
+    );
   }
 
   return (

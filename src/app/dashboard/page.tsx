@@ -58,6 +58,7 @@ export default async function Dashboard({
         .from("booking_requests")
         .select("id,name,phone,email,service,message,preferred_time,sms_consent,status,created_at")
         .eq("channel_id", ch.id)
+        .neq("status", "fake")
         .order("created_at", { ascending: false })
         .limit(50)
     : { data: [] };
@@ -480,6 +481,7 @@ export default async function Dashboard({
                       <option value="closed">Closed</option>
                     </select>
                     <button className="btn-ghost" type="submit">Update</button>
+                    <button className="btn-ghost" type="submit" name="flag" value="fake" title="Blocks this phone and email from sending again">Not a real request</button>
                   </form>
                 </div>
               ))
