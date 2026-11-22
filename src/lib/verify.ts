@@ -2,7 +2,7 @@
 // Codes are stored hashed, expire in 10 minutes, allow 5 tries, and sends are rate limited per phone and per device.
 import { createHash, randomBytes, randomInt, timingSafeEqual } from "node:crypto";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { sendSms, toE164 } from "@/lib/twilio";
+import { sendSms, toE164, verifyCheck, verifyServiceSid, verifyStart } from "@/lib/twilio";
 import { BOOKING_CONSENT_TEXT } from "@/lib/booking";
 import { dispatchWave } from "@/lib/sos";
 
@@ -15,6 +15,7 @@ const RESEND_GAP_MS = 30_000;
 const PHONE_PER_HOUR = 4;
 const IP_PER_HOUR = 12;
 
+// Without Twilio Verify, codes go out as a plain text from our own number (needs A2P 10DLC approval to be reliable).
 const sender = () => process.env.TWILIO_VERIFY_NUMBER || process.env.TWILIO_SOS_NUMBER || null;
 const hashCode = (token: string, code: string) => createHash("sha256").update(`verify:${token}:${code}`).digest("hex");
 const newCode = () => String(randomInt(0, 1_000_000)).padStart(6, "0");
@@ -58,29 +59,32 @@ export async function startVerification(opts: { kind: VerifyKind; requestId: num
   if (!phone) return { ok: false, error: "Enter a US mobile number so we can text you a code.", status: 400 };
   if (await overLimit(phone, opts.ipHash)) return { ok: false, error: "Too many tries. Please wait a bit and try again.", status: 429 };
   const token = opts.token ?? randomBytes(16).toString("hex");
+  const viaVerify = !!verifyServiceSid();
   const code = newCode();
   const { error } = await db.from("request_verifications").insert({
     kind: opts.kind, request_id: opts.requestId, token, phone,
-    code_hash: hashCode(token, code), expires_at: new Date(Date.now() + TTL_MS).toISOString(), ip_hash: opts.ipHash,
+    code_hash: viaVerify ? "twilio" : hashCode(token, code), expires_at: new Date(Date.now() + TTL_MS).toISOString(), ip_hash: opts.ipHash,
   });
   if (error) return { ok: false, error: "Something went wrong. Try again.", status: 500 };
-  if (!(await textCode(phone, code, opts.channelId))) return { ok: false, error: "We couldn't text that number. Check it and try again.", status: 502 };
+  const sent = viaVerify ? await verifyStart(phone) : await textCode(phone, code, opts.channelId);
+  if (!sent) return { ok: false, error: "We couldn't text that number. Check it and try again.", status: 502 };
   return { ok: true, token };
 }
 
 export async function resendCode(token: string): Promise<{ ok: true } | Fail> {
   const db = supabaseAdmin();
   if (!db || !/^[0-9a-f]{32}$/.test(token)) return { ok: false, error: "Not found.", status: 404 };
-  const { data: v } = await db.from("request_verifications").select("id,phone,sends,last_sent_at,verified_at,ip_hash").eq("token", token).maybeSingle();
+  const { data: v } = await db.from("request_verifications").select("id,phone,sends,last_sent_at,verified_at,ip_hash,code_hash").eq("token", token).maybeSingle();
   if (!v || v.verified_at) return { ok: false, error: "Not found.", status: 404 };
   if (Date.now() - new Date(v.last_sent_at).getTime() < RESEND_GAP_MS) return { ok: false, error: "Give it a few seconds, then try again.", status: 429 };
   if (await overLimit(v.phone, v.ip_hash)) return { ok: false, error: "Too many tries. Please wait a bit and try again.", status: 429 };
+  const viaVerify = v.code_hash === "twilio";
   const code = newCode();
   await db.from("request_verifications").update({
-    code_hash: hashCode(token, code), attempts: 0, sends: v.sends + 1,
+    code_hash: viaVerify ? "twilio" : hashCode(token, code), attempts: 0, sends: v.sends + 1,
     expires_at: new Date(Date.now() + TTL_MS).toISOString(), last_sent_at: new Date().toISOString(),
   }).eq("id", v.id);
-  if (!(await textCode(v.phone, code))) return { ok: false, error: "We couldn't text that number.", status: 502 };
+  if (!(viaVerify ? await verifyStart(v.phone) : await textCode(v.phone, code))) return { ok: false, error: "We couldn't text that number.", status: 502 };
   return { ok: true };
 }
 
@@ -88,12 +92,21 @@ export async function checkCode(token: string, rawCode: string): Promise<{ ok: t
   const db = supabaseAdmin();
   const code = rawCode.replace(/\D/g, "");
   if (!db || !/^[0-9a-f]{32}$/.test(token) || code.length !== 6) return { ok: false, error: "Enter the 6-digit code.", status: 400 };
-  const { data: v } = await db.from("request_verifications").select("id,kind,request_id,code_hash,attempts,expires_at,verified_at").eq("token", token).maybeSingle();
+  const { data: v } = await db.from("request_verifications").select("id,kind,request_id,phone,code_hash,attempts,expires_at,verified_at").eq("token", token).maybeSingle();
   if (!v) return { ok: false, error: "Not found.", status: 404 };
   if (v.verified_at) return { ok: true, kind: v.kind as VerifyKind };
   if (new Date(v.expires_at).getTime() < Date.now()) return { ok: false, error: "That code expired. Tap “Text me a new code.”", status: 410 };
   if (v.attempts >= MAX_TRIES) return { ok: false, error: "Too many wrong tries. Tap “Text me a new code.”", status: 429 };
-  if (!sameHash(v.code_hash, hashCode(token, code))) {
+  let right: boolean;
+  if (v.code_hash === "twilio") {
+    const r = await verifyCheck(v.phone, code);
+    if (r === "gone") return { ok: false, error: "That code expired. Tap “Text me a new code.”", status: 410 };
+    if (r === "error") return { ok: false, error: "Something went wrong. Try again.", status: 502 };
+    right = r === "approved";
+  } else {
+    right = sameHash(v.code_hash, hashCode(token, code));
+  }
+  if (!right) {
     // Optimistic bump: if two guesses race, only one lands, so the cap holds.
     await db.from("request_verifications").update({ attempts: v.attempts + 1 }).eq("id", v.id).eq("attempts", v.attempts);
     return { ok: false, error: "That code isn't right. Check the text and try again.", status: 400 };
