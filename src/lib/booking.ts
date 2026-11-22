@@ -50,3 +50,6 @@ export function fmtWhen(iso: string, tz: string): string {
 export function tzLabel(tz: string): string {
   return TIMEZONES.find((t) => t.value === tz)?.label ?? tz;
 }
+
+export const BOOKING_CONSENT_TEXT =
+  "I agree to receive text messages about this request from the business and from HubLinkPro on its behalf. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";

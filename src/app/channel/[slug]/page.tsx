@@ -11,6 +11,7 @@ import WorkGallery, { type WorkItem } from "@/components/WorkGallery";
 import BookTime from "@/components/BookTime";
 import { addDays, dayKey } from "@/lib/booking";
 import { requestBooking } from "./actions";
+import CodeEntry from "@/components/CodeEntry";
 import { addPortfolioItem } from "@/app/dashboard/actions";
 import { SITE_URL, jsonLd } from "@/lib/site";
 import ChannelChat from "@/components/ChannelChat";
@@ -279,9 +280,11 @@ export default async function ChannelPage({
             <h2 style={{ fontSize: 20, marginTop: 0 }}>{bookable ? "Or send a request instead" : "Request a booking"}</h2>
             {sp.requested ? (
               <p className="note ok">Sent. {c.name} will contact you at the number you gave.</p>
+            ) : /^[0-9a-f]{32}$/.test(sp.verify ?? "") ? (
+              <CodeEntry token={sp.verify!} doneHref={`/channel/${encodeURIComponent(c.slug)}?requested=1#book`} />
             ) : (
               <form action={requestBooking}>
-                {sp.reqerror && <p className="note">Add your name and a phone number (and a valid email if you give one).</p>}
+                {sp.reqerror === "sms" ? <p className="note" role="alert">We couldn&apos;t text a code to that number. Check it and try again, or call {c.name} directly.</p> : sp.reqerror && <p className="note">Add your name and a mobile number (and a valid email if you give one).</p>}
                 <input type="hidden" name="slug" value={c.slug} />
                 <div style={{ position: "absolute", left: "-9999px" }} aria-hidden="true">
                   <label>Leave this empty<input name="company_site" tabIndex={-1} autoComplete="off" /></label>
@@ -304,6 +307,7 @@ export default async function ChannelPage({
                   <input type="checkbox" name="sms_consent" />
                   <span>I agree to receive text messages about this request from the business and from HubLinkPro on its behalf. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase. <a href="/sms">SMS terms</a> · <a href="/privacy">Privacy</a></span>
                 </label>
+                <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 12px" }}>We&apos;ll text a 6-digit code to confirm it&apos;s really you. This keeps fake requests away from {c.name}.</p>
                 <button className="btn-primary" type="submit">Send request</button>
               </form>
             )}

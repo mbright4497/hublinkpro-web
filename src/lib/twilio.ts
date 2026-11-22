@@ -107,3 +107,41 @@ export async function startCall(from: string, to: string, url: string, statusUrl
     return null;
   }
 }
+
+// Twilio Verify: Twilio generates, texts and checks the code from its own pre-registered sender pool,
+// so no A2P 10DLC registration of our own is needed. Set TWILIO_VERIFY_SERVICE_SID to use it.
+export const verifyServiceSid = () => process.env.TWILIO_VERIFY_SERVICE_SID || null;
+
+async function verifyCall(path: "Verifications" | "VerificationCheck", params: Record<string, string>) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const svc = verifyServiceSid();
+  if (!sid || !token || !svc) return null;
+  try {
+    return await fetch(`https://verify.twilio.com/v2/Services/${svc}/${path}`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(params).toString(),
+    });
+  } catch (e) {
+    console.error("[HLP-VERIFY] twilio error", String(e));
+    return null;
+  }
+}
+
+export async function verifyStart(to: string): Promise<boolean> {
+  const res = await verifyCall("Verifications", { To: to, Channel: "sms" });
+  if (!res) return false;
+  if (!res.ok) console.error("[HLP-VERIFY] start failed", res.status, (await res.text()).slice(0, 300));
+  return res.ok;
+}
+
+// approved = right code; pending = wrong code; gone = expired or never started; error = couldn't ask.
+export async function verifyCheck(to: string, code: string): Promise<"approved" | "pending" | "gone" | "error"> {
+  const res = await verifyCall("VerificationCheck", { To: to, Code: code });
+  if (!res) return "error";
+  if (res.status === 404) return "gone";
+  if (!res.ok) return "error";
+  const j = (await res.json().catch(() => ({}))) as { status?: string };
+  return j.status === "approved" ? "approved" : "pending";
+}

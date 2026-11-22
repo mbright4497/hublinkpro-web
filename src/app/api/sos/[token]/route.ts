@@ -9,8 +9,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ token: string 
   const { token } = await ctx.params;
   const db = supabaseAdmin();
   if (!db || !/^[0-9a-f]{32}$/.test(token)) return NextResponse.json({ error: "not found" }, { status: 404 });
-  const { data: r } = await db.from("sos_requests").select("id,status,category,zip,eta_minutes,claimed_channel_id,created_at").eq("token", token).maybeSingle();
+  const { data: r } = await db.from("sos_requests").select("id,status,category,zip,eta_minutes,claimed_channel_id,created_at,verified_at").eq("token", token).maybeSingle();
   if (!r) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (r.status === "open" && !r.verified_at) {
+    await escalate(r.id);
+    return NextResponse.json({ status: "unverified" });
+  }
   if (r.status === "open") await escalate(r.id);
   const { data: fresh } = await db.from("sos_requests").select("status,eta_minutes,claimed_channel_id,created_at,claimed_at,category").eq("id", r.id).single();
   let pro: { name: string; slug: string; phone: string | null } | null = null;

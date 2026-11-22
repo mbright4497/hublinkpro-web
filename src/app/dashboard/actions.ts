@@ -178,10 +178,20 @@ export async function setRequestStatus(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   const id = Number(formData.get("id"));
-  const status = String(formData.get("status"));
-  if (!Number.isInteger(id) || !["new", "contacted", "booked", "closed"].includes(status)) redirect("/dashboard");
+  const status = formData.get("flag") === "fake" ? "fake" : String(formData.get("status"));
+  if (!Number.isInteger(id) || !["new", "contacted", "booked", "closed", "fake"].includes(status)) redirect("/dashboard");
   // RLS limits this to requests on the signed-in owner's own Channel.
-  await supabase.from("booking_requests").update({ status }).eq("id", id);
+  const { data: row } = await supabase.from("booking_requests").update({ status }).eq("id", id).select("channel_id,phone,email").maybeSingle();
+  // "Not a real request": block that phone and email so they can't send to anyone again.
+  if (status === "fake" && row) {
+    const db = supabaseAdmin();
+    const phone = toE164(row.phone);
+    const rows = [
+      ...(phone ? [{ kind: "phone", value: phone }] : []),
+      ...(row.email ? [{ kind: "email", value: row.email.trim().toLowerCase() }] : []),
+    ].map((r) => ({ ...r, reason: "flagged by pro", flagged_by_channel_id: row.channel_id }));
+    if (db && rows.length) await db.from("blocked_contacts").upsert(rows, { onConflict: "kind,value", ignoreDuplicates: true });
+  }
   redirect("/dashboard?tab=schedule#requests");
 }
 

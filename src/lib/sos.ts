@@ -45,8 +45,8 @@ export async function categoriesAvailable(zip: string): Promise<string[]> {
 export async function dispatchWave(requestId: number, wave: 1 | 2) {
   const db = supabaseAdmin();
   if (!db) return 0;
-  const { data: r } = await db.from("sos_requests").select("id,zip,category,status").eq("id", requestId).maybeSingle();
-  if (!r || r.status !== "open") return 0;
+  const { data: r } = await db.from("sos_requests").select("id,zip,category,status,verified_at").eq("id", requestId).maybeSingle();
+  if (!r || r.status !== "open" || !r.verified_at) return 0; // never alert a pro for an unconfirmed request
   const pros = await onCallPros(r.category, r.zip, wave);
   const { data: already } = await db.from("sos_dispatches").select("channel_id").eq("request_id", requestId);
   const done = new Set((already ?? []).map((d) => d.channel_id));
@@ -72,8 +72,13 @@ export async function dispatchWave(requestId: number, wave: 1 | 2) {
 export async function escalate(requestId: number) {
   const db = supabaseAdmin();
   if (!db) return;
-  const { data: r } = await db.from("sos_requests").select("id,token,status,created_at,zip,category,name,phone").eq("id", requestId).maybeSingle();
+  const { data: r } = await db.from("sos_requests").select("id,token,status,created_at,zip,category,name,phone,verified_at").eq("id", requestId).maybeSingle();
   if (!r || r.status !== "open") return;
+  // Unconfirmed: nothing to escalate. Just let abandoned ones expire.
+  if (!r.verified_at) {
+    if (Date.now() - new Date(r.created_at).getTime() >= 1800_000) await db.from("sos_requests").update({ status: "expired" }).eq("id", requestId).eq("status", "open");
+    return;
+  }
   const age = (Date.now() - new Date(r.created_at).getTime()) / 1000;
   if (age >= 120 && age < 1800) await dispatchWave(requestId, 2);
   if (age >= 600) {

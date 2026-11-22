@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import CodeEntry from "@/components/CodeEntry";
 
 type S = { status: string; eta?: number; pro?: { name: string; slug: string; phone: string | null } | null; fallback?: { name: string; phone: string }[]; canReportNoShow?: boolean };
 
@@ -31,6 +32,7 @@ export default function SosStatus({ token }: { token: string }) {
   if (missing) return <div className="bookbox"><p>We couldn&apos;t find that request.</p><Link href="/sos" className="btn-ghost">Start over</Link></div>;
   if (!s) return <div className="bookbox"><p>Loading…</p></div>;
 
+  if (s.status === "unverified") return <CodeEntry token={token} doneHref={`/sos/${token}`} />;
   if (s.status === "claimed" || s.status === "arrived") {
     return (
       <div className="bookbox" aria-live="polite">
