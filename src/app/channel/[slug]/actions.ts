@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
 import { fmtWhen, tzLabel } from "@/lib/booking";
 import { sendEmail, ownerEmail } from "@/lib/notify";
+import { renderEmail, requestAlertEmail, requestConfirmEmail, bookingAlertEmail, bookingConfirmEmail } from "@/lib/email-template";
+import { SITE_URL } from "@/lib/site";
 
 const BOOKING_CONSENT_TEXT =
   "I agree to receive text messages about this request from the business and from HubLinkPro on its behalf. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -55,35 +57,12 @@ export async function requestBooking(formData: FormData) {
   // Best-effort and sent together, so a slow or failed email never blocks the visitor.
   // Each send is recorded in message_log by sendEmail.
   const ownerTo = await ownerEmail(ch.owner_id);
+  const lead = { name, phone, email, service, message, preferredTime: preferred_time };
+  const confirm = requestConfirmEmail({ lead, channelName: ch.name, channelPhone: ch.phone, channelUrl: `${SITE_URL}/channel/${encodeURIComponent(slug)}` });
+  const alert = requestAlertEmail({ lead });
   await Promise.all([
-    email
-      ? sendEmail({
-          to: email,
-          log: { channelId: ch.id, label: "Request confirmation to customer" },
-          subject: `We got your request: ${ch.name}`,
-          text:
-            `Hi ${name},\n\nYour request went to ${ch.name}. They'll contact you soon.\n` +
-            (service ? `Service: ${service}\n` : "") +
-            (ch.phone ? `\nWant to talk sooner? Call ${ch.phone}.\n` : "") +
-            `\nSent through HubLinkPro.`,
-        })
-      : Promise.resolve(false),
-    ownerTo
-      ? sendEmail({
-          to: ownerTo,
-          replyTo: email ?? undefined,
-          log: { channelId: ch.id, label: "New request alert to owner" },
-          subject: `New request: ${name}${service ? `, ${service}` : ""}`,
-          text:
-            `${name} just sent a request on your HubLinkPro Channel. The first business to reply usually wins the job.\n\n` +
-            `Phone: ${phone}\n` +
-            (email ? `Email: ${email}\n` : "") +
-            (service ? `Service: ${service}\n` : "") +
-            (preferred_time ? `Best time: ${preferred_time}\n` : "") +
-            (message ? `\nThey wrote:\n${message}\n` : "") +
-            `\nSee and manage requests: https://hublinkpro.com/dashboard#bookings`,
-        })
-      : Promise.resolve(false),
+    email ? sendEmail({ to: email, subject: confirm.subject, ...renderEmail(confirm.parts), log: { channelId: ch.id, label: "Request confirmation to customer" } }) : Promise.resolve(false),
+    ownerTo ? sendEmail({ to: ownerTo, replyTo: email ?? undefined, subject: alert.subject, ...renderEmail(alert.parts), log: { channelId: ch.id, label: "New request alert to owner" } }) : Promise.resolve(false),
   ]);
 
   // Best-effort hand-off to GoHighLevel. The request is already saved, so this never blocks the visitor.
@@ -172,33 +151,15 @@ export async function bookSlot(formData: FormData) {
 
   // Best-effort emails. The booking is already saved.
   let emailed = false;
+  const lead = { name, phone, email, service, message };
   if (email) {
-    emailed = await sendEmail({
-      to: email,
-      subject: `You're booked with ${ch.name}: ${when}`,
-      text:
-        `Hi ${name},\n\nYou're booked with ${ch.name} on ${when} (${zone} time).\n` +
-        (service ? `Service: ${service}\n` : "") +
-        (ch.phone ? `\nNeed to change it? Call ${ch.phone}.\n` : "\nNeed to change it? Reply to the business directly.\n") +
-        `\nSent through HubLinkPro.`,
-      log: { channelId: ch.id, label: "Booking confirmation to customer" },
-    });
+    const c = bookingConfirmEmail({ lead, channelName: ch.name, channelPhone: ch.phone, channelUrl: `${SITE_URL}/channel/${encodeURIComponent(slug)}`, when, zone });
+    emailed = await sendEmail({ to: email, subject: c.subject, ...renderEmail(c.parts), log: { channelId: ch.id, label: "Booking confirmation to customer" } });
   }
   const to = await ownerEmail(ch.owner_id);
   if (to) {
-    await sendEmail({
-      to,
-      replyTo: email ?? undefined,
-      log: { channelId: ch.id, label: "New booking alert to owner" },
-      subject: `New booking: ${name}, ${when}`,
-      text:
-        `${name} booked ${when} (${zone} time) on your HubLinkPro Channel.\n\n` +
-        `Phone: ${phone}\n` +
-        (email ? `Email: ${email}\n` : "") +
-        (service ? `Service: ${service}\n` : "") +
-        (message ? `\nThey wrote:\n${message}\n` : "") +
-        `\nSee and manage bookings: https://hublinkpro.com/dashboard#bookings`,
-    });
+    const a = bookingAlertEmail({ lead, when, zone });
+    await sendEmail({ to, replyTo: email ?? undefined, subject: a.subject, ...renderEmail(a.parts), log: { channelId: ch.id, label: "New booking alert to owner" } });
   }
 
   redirect(`${back}?booked=${encodeURIComponent(startIso)}${emailed ? "&emailed=1" : ""}#book`);
