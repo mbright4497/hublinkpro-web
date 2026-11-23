@@ -11,6 +11,7 @@ export type EmailParts = {
   button?: { label: string; url: string };
   signoff?: boolean; // default true: "Matt Bright / HubLinkPro, Johnson City, Tennessee"
   optoutUrl?: string;
+  footerNote?: string; // replaces the "just reply to this email" line (use when replies don't go to Matt)
 };
 
 const BRAND = "#d85a30";
@@ -59,7 +60,7 @@ export function renderEmail(p: EmailParts): { html: string; text: string } {
 </td></tr>
 <tr><td style="padding:22px 28px 26px;font-size:12px;line-height:1.6;color:${MUTED};border-top:1px solid #e5e7eb;">
   HubLinkPro · Local pros, verified work, your neighborhood.<br>
-  <a href="${SITE_URL}" style="color:${MUTED};">hublinkpro.com</a> · Questions? Just reply to this email and it comes straight to me.${optout}
+  <a href="${SITE_URL}" style="color:${MUTED};">hublinkpro.com</a> · ${p.footerNote ? esc(p.footerNote) : "Questions? Just reply to this email and it comes straight to me."}${optout}
 </td></tr>
 </table></td></tr></table></body></html>`;
 
@@ -68,7 +69,7 @@ export function renderEmail(p: EmailParts): { html: string; text: string } {
   if (p.codeBox) lines.push(`${p.codeBox.label}: ${p.codeBox.value}`, "");
   if (p.button) lines.push(`${p.button.label}: ${p.button.url}`, "");
   if (sign) lines.push("Matt Bright", "Founder, HubLinkPro · Johnson City, Tennessee", "");
-  lines.push("Questions? Just reply to this email and it comes straight to me.");
+  lines.push(p.footerNote ?? "Questions? Just reply to this email and it comes straight to me.");
   if (p.optoutUrl) lines.push(`Don't want these emails? ${p.optoutUrl}`);
   return { html, text: lines.join("\n") };
 }
@@ -98,6 +99,86 @@ export function codeEmail(o: { code: string; months: number }): { subject: strin
       paragraphs: [`Here's your founding code for HubLinkPro. It gives you Pro free for ${o.months} months, then goes back to Free on its own when the time is up.`, "Sign in, open the Plan tab on your dashboard, and enter it there."],
       codeBox: { label: "Founding code", value: o.code },
       button: { label: "Open my dashboard", url: `${SITE_URL}/dashboard?tab=plan` },
+    },
+  };
+}
+
+
+// ---- Request and booking emails (sent from the Channel page) ----
+
+type Lead = { name: string; phone: string; email?: string | null; service?: string | null; message?: string | null; preferredTime?: string | null };
+const leadBullets = (l: Lead, when?: string) => [
+  ...(when ? [`When: ${when}`] : []),
+  `Phone: ${l.phone}`,
+  ...(l.email ? [`Email: ${l.email}`] : []),
+  ...(l.service ? [`Service: ${l.service}`] : []),
+  ...(l.preferredTime ? [`Best time: ${l.preferredTime}`] : []),
+];
+
+// To the Channel owner the moment a request comes in. Replies go to the customer, not to Matt.
+export function requestAlertEmail(o: { lead: Lead }): { subject: string; parts: EmailParts } {
+  const { lead } = o;
+  return {
+    subject: `New request: ${lead.name}${lead.service ? `, ${lead.service}` : ""}`,
+    parts: {
+      preheader: `${lead.name} just asked for you. Reply fast.`,
+      heading: `New request from ${lead.name}`,
+      paragraphs: ["Someone just sent a request on your HubLinkPro Channel. The first business to reply usually wins the job.", ...(lead.message ? [`They wrote:\n${lead.message}`] : [])],
+      bullets: leadBullets(lead),
+      button: { label: "Open my requests", url: `${SITE_URL}/dashboard#bookings` },
+      signoff: false,
+      footerNote: lead.email ? "Reply to this email to answer them directly." : "They didn't leave an email, so give them a call.",
+    },
+  };
+}
+
+// To the customer right after they send a request.
+export function requestConfirmEmail(o: { lead: Lead; channelName: string; channelPhone?: string | null; channelUrl: string }): { subject: string; parts: EmailParts } {
+  const { lead, channelName } = o;
+  return {
+    subject: `We got your request: ${channelName}`,
+    parts: {
+      preheader: `${channelName} will be in touch soon.`,
+      heading: "Your request is in",
+      paragraphs: [`Hi ${lead.name}, your request went to ${channelName}. They'll contact you soon.`, ...(o.channelPhone ? [`Want to talk sooner? Call ${o.channelPhone}.`] : [])],
+      bullets: lead.service ? [`Service: ${lead.service}`] : undefined,
+      button: { label: `View ${channelName}`, url: o.channelUrl },
+      signoff: false,
+      footerNote: `Sent by HubLinkPro on behalf of ${channelName}.`,
+    },
+  };
+}
+
+// To the customer after they book a real time slot.
+export function bookingConfirmEmail(o: { lead: Lead; channelName: string; channelPhone?: string | null; channelUrl: string; when: string; zone: string }): { subject: string; parts: EmailParts } {
+  const { lead, channelName } = o;
+  return {
+    subject: `You're booked with ${channelName}: ${o.when}`,
+    parts: {
+      preheader: `${o.when} (${o.zone} time)`,
+      heading: "You're booked",
+      paragraphs: [`Hi ${lead.name}, you're booked with ${channelName}.`, o.channelPhone ? `Need to change it? Call ${o.channelPhone}.` : "Need to change it? Reply to the business directly."],
+      bullets: [`When: ${o.when} (${o.zone} time)`, ...(lead.service ? [`Service: ${lead.service}`] : [])],
+      button: { label: `View ${channelName}`, url: o.channelUrl },
+      signoff: false,
+      footerNote: `Sent by HubLinkPro on behalf of ${channelName}.`,
+    },
+  };
+}
+
+// To the Channel owner when someone books a time.
+export function bookingAlertEmail(o: { lead: Lead; when: string; zone: string }): { subject: string; parts: EmailParts } {
+  const { lead } = o;
+  return {
+    subject: `New booking: ${lead.name}, ${o.when}`,
+    parts: {
+      preheader: `${lead.name} booked ${o.when}.`,
+      heading: `New booking from ${lead.name}`,
+      paragraphs: [`${lead.name} booked a time on your HubLinkPro Channel.`, ...(lead.message ? [`They wrote:\n${lead.message}`] : [])],
+      bullets: leadBullets(lead, `${o.when} (${o.zone} time)`),
+      button: { label: "See my bookings", url: `${SITE_URL}/dashboard#bookings` },
+      signoff: false,
+      footerNote: lead.email ? "Reply to this email to answer them directly." : "They didn't leave an email, so give them a call.",
     },
   };
 }
