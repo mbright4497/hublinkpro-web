@@ -11,6 +11,7 @@ import { isHex, accentReadable } from "@/lib/accent";
 import { bgAllowed } from "@/lib/background";
 import { SOS_CATEGORIES } from "@/lib/sos-categories";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { parseServices, starterCopy } from "@/lib/starter";
 
 const SMS_CONSENT_TEXT =
   "I agree to receive text messages from HubLinkPro about my Channel, my leads, and my account. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -149,6 +150,45 @@ export async function saveChannel(formData: FormData) {
   revalidatePath("/"); // the homepage poster shows this Channel's logo
   revalidatePath("/channel", "layout");
   redirect(status === "pending" ? "/dashboard?submitted=1" : "/dashboard?saved=1");
+}
+
+// Quick start: five answers become a draft Channel. Copy is a plain template built only from what the owner typed.
+// Nothing goes live from here; the owner reviews it and presses Publish.
+export async function quickStart(formData: FormData) {
+  const supabase = await supabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // One Channel per owner for now, same as the rest of the dashboard.
+  const { data: existing } = await supabase.from("channels").select("id").eq("owner_id", user.id).limit(1).maybeSingle();
+  if (existing) redirect("/dashboard");
+
+  const name = String(formData.get("name") ?? "").trim().slice(0, 100);
+  const networkId = Number(formData.get("network_id")) || null;
+  const services = parseServices(String(formData.get("services") ?? ""));
+  const city = String(formData.get("city") ?? "").trim().slice(0, 60);
+  const phone = String(formData.get("phone") ?? "").trim().slice(0, 30);
+  if (!name || !networkId || !city || phone.replace(/\D/g, "").length < 10) redirect("/dashboard?error=quick");
+
+  const copy = starterCopy({ name, services, city });
+  const slug = `${slugify(name)}-${Math.random().toString(36).slice(2, 6)}`;
+  const { error } = await supabase.from("channels").insert({
+    owner_id: user.id,
+    slug,
+    name,
+    network_id: networkId,
+    services,
+    city,
+    phone,
+    tagline: copy.tagline,
+    description: copy.description,
+    hero_image_url: mediaUrl(formData.get("hero_image_url"), user.id),
+    status: "draft",
+  });
+  if (error) redirect("/dashboard?error=save");
+
+  revalidatePath("/dashboard");
+  redirect("/dashboard?tab=home&started=1");
 }
 
 // One-tap publish from the dashboard Home tab: the same "pending" step as the form's publish button,

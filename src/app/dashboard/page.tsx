@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabaseServer } from "@/lib/supabase/server";
-import { saveChannel, publishChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, saveSos, sosArrived, sosDone, truckGoLive, truckGoOffline } from "./actions";
+import { saveChannel, quickStart, publishChannel, signOut, setRequestStatus, addPortfolioItem, deletePortfolioItem, redeemCode, saveAvailability, cancelBooking, saveCalls, saveSos, sosArrived, sosDone, truckGoLive, truckGoOffline } from "./actions";
 import { SLOT_LENGTHS, TIMEZONES, WEEKDAYS, fmtWhen } from "@/lib/booking";
 import MediaField from "@/components/MediaField";
 import WorkAddForm from "@/components/WorkAddForm";
@@ -16,6 +16,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import { answerStat } from "@/lib/sos";
 import { isDue, todayIn, type Lead } from "@/lib/crm";
 import DashTabs, { type DashTab } from "@/components/DashTabs";
+import { channelStrength } from "@/lib/starter";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Your Channel | HubLinkPro" };
@@ -30,6 +31,7 @@ const ERRORS: Record<string, string> = {
   location: "We couldn't read your location. Allow location access and try again.",
   notfound: "We couldn't find that Channel.",
   publish: "Add your business name and pick what you do, then press Publish my Channel again.",
+  quick: "Please fill in your business name, what you do, your city, and a phone number with area code.",
 };
 const STATUS_TEXT: Record<string, string> = {
   draft: "Draft — only you can see it",
@@ -228,6 +230,34 @@ export default async function Dashboard({
             </Link>
           </p>
         )}
+
+        {ch && tab === "home" && sp.started && (
+          <p className="note ok">Your draft is ready. Check it below, add what is missing, then press Publish.</p>
+        )}
+        {ch && tab === "home" && (() => {
+          const st = channelStrength({ ...ch, social_links: (ch.social_links ?? {}) as Record<string, string> });
+          return (
+            <section className="strength" style={{ margin: "8px 0 24px" }}>
+              <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Channel strength: {st.pct}%</h2>
+              <div style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,.12)", overflow: "hidden", marginBottom: 12 }} role="progressbar" aria-valuenow={st.pct} aria-valuemin={0} aria-valuemax={100}>
+                <div style={{ width: `${st.pct}%`, height: "100%", background: "var(--color-brand2)" }} />
+              </div>
+              {st.next ? (
+                <p style={{ margin: "0 0 10px" }}>
+                  <b>Next step:</b> {st.next.tip}{" "}
+                  <Link href={st.next.key === "booking" ? "/dashboard?tab=schedule" : "/dashboard?tab=look"} style={{ color: "var(--color-brand2)" }}>Do it →</Link>
+                </p>
+              ) : (
+                <p style={{ margin: "0 0 10px" }}>Everything is filled in. Nice work.</p>
+              )}
+              <ul className="pubcheck">
+                {st.items.map((i) => (
+                  <li key={i.key} className={i.ok ? "ok" : ""}>{i.ok ? "✓" : "○"} {i.label}</li>
+                ))}
+              </ul>
+            </section>
+          );
+        })()}
 
         {ch && <DashTabs active={tab} leadsBadge={leadNew} scheduleBadge={upcoming?.length ?? 0} />}
 
@@ -562,7 +592,43 @@ export default async function Dashboard({
           </section>
         )}
 
-        {(!ch || tab === "look") && <form action={saveChannel}>
+        {!ch && sp.full !== "1" && (
+          <form action={quickStart} className="quickstart">
+            <h2 className="dsec" style={{ borderTop: 0, paddingTop: 0, marginTop: 0 }}>Build your Channel in about a minute</h2>
+            <p className="lead" style={{ fontSize: 14, marginTop: 0 }}>
+              Five quick answers. We set up a draft for you. Nothing goes live until you say so, and you can change everything after.
+            </p>
+            <div className="field">
+              <label>1. Business name</label>
+              <input name="name" required maxLength={100} placeholder="Your business name" />
+            </div>
+            <div className="field">
+              <label>2. What do you do?</label>
+              <select name="network_id" required defaultValue="">
+                <option value="" disabled>Choose a network</option>
+                {networks?.map((n) => (
+                  <option key={n.id} value={n.id}>{n.name}</option>
+                ))}
+              </select>
+              <input name="services" maxLength={300} placeholder="A few words, separated by commas (for example: Driveway paving, Sealcoating)" style={{ marginTop: 8 }} />
+            </div>
+            <div className="field">
+              <label>3. City</label>
+              <input name="city" required maxLength={60} placeholder="Johnson City" />
+            </div>
+            <div className="field">
+              <label>4. Phone</label>
+              <input name="phone" type="tel" required maxLength={30} placeholder="(423) 555-1234" />
+            </div>
+            <MediaField name="hero_image_url" kind="hero" userId={user.id} label="5. A photo of your work" help="Take one with your phone. A wide photo of your best job or your crew works best. You can skip it for now." />
+            <button className="btn-primary" type="submit">Build my Channel</button>
+            <p style={{ fontSize: 13, marginTop: 14 }}>
+              <Link href="/dashboard?full=1" style={{ color: "var(--color-brand2)" }}>Prefer the full form? →</Link>
+            </p>
+          </form>
+        )}
+
+        {(!ch ? sp.full === "1" : tab === "look") && <form action={saveChannel}>
           {ch && <input type="hidden" name="id" value={ch.id} />}
           <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0 }}>
             <h2 className="dsec">Your look</h2>
