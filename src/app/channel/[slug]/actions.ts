@@ -7,6 +7,7 @@ import { sendEmail, ownerEmail } from "@/lib/notify";
 import { renderEmail, requestAlertEmail, requestConfirmEmail, bookingAlertEmail, bookingConfirmEmail } from "@/lib/email-template";
 import { SITE_URL } from "@/lib/site";
 import { recordRequestReply } from "@/lib/automation";
+import { sendConsentedSms } from "@/lib/sms";
 
 const BOOKING_CONSENT_TEXT =
   "I agree to receive text messages about this request from the business and from HubLinkPro on its behalf. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -34,7 +35,7 @@ export async function requestBooking(formData: FormData) {
   const supabase = await supabaseServer();
   const { data: ch } = await supabase
     .from("channels")
-    .select("id,name,phone,status,owner_id,city,market_id")
+    .select("id,name,phone,status,owner_id,city,market_id,sms_consent")
     .eq("slug", slug)
     .eq("status", "live")
     .maybeSingle();
@@ -65,6 +66,21 @@ export async function requestBooking(formData: FormData) {
   const [confirmed] = await Promise.all([
     email ? sendEmail({ to: email, subject: confirm.subject, ...renderEmail(confirm.parts), log: { channelId: ch.id, label: "Request confirmation to customer" } }) : Promise.resolve(false),
     ownerTo ? sendEmail({ to: ownerTo, replyTo: email ?? undefined, subject: alert.subject, ...renderEmail(alert.parts), log: { channelId: ch.id, label: "New request alert to owner" } }) : Promise.resolve(false),
+    // Texts (off unless SMS_TRANSACTIONAL_ENABLED): only to people who checked their own consent box.
+    sendConsentedSms({
+      to: phone,
+      consent,
+      channelId: ch.id,
+      label: "Request confirmation text to customer",
+      body: `HubLinkPro: Thanks for your ${service ? `${service} ` : ""}request to ${ch.name}. They'll be in touch soon. Msg frequency varies. Reply STOP to opt out, HELP for help.`,
+    }),
+    sendConsentedSms({
+      to: ch.phone,
+      consent: !!ch.sms_consent,
+      channelId: ch.id,
+      label: "New request text to owner",
+      body: `HubLinkPro: New request from a${ch.city ? ` ${ch.city}` : ""} customer. See and reply: ${SITE_URL}/dashboard`,
+    }),
   ]);
   // Feeds the response-time badge and the public automation feed (real events only).
   if (confirmed) await recordRequestReply({ channelId: ch.id, channelName: ch.name, city: ch.city, marketId: ch.market_id, phone, startedAt });
@@ -125,7 +141,7 @@ export async function bookSlot(formData: FormData) {
   const supabase = await supabaseServer();
   const { data: ch } = await supabase
     .from("channels")
-    .select("id,name,phone,owner_id,booking_timezone,slot_minutes")
+    .select("id,name,phone,owner_id,booking_timezone,slot_minutes,city,sms_consent")
     .eq("slug", slug)
     .eq("status", "live")
     .eq("booking_enabled", true)
@@ -160,6 +176,22 @@ export async function bookSlot(formData: FormData) {
     const c = bookingConfirmEmail({ lead, channelName: ch.name, channelPhone: ch.phone, channelUrl: `${SITE_URL}/channel/${encodeURIComponent(slug)}`, when, zone });
     emailed = await sendEmail({ to: email, subject: c.subject, ...renderEmail(c.parts), log: { channelId: ch.id, label: "Booking confirmation to customer" } });
   }
+  await Promise.all([
+    sendConsentedSms({
+      to: phone,
+      consent,
+      channelId: ch.id,
+      label: "Booking confirmation text to customer",
+      body: `HubLinkPro: Your appointment with ${ch.name} is confirmed for ${when} ${zone}. Reply STOP to opt out, HELP for help.`,
+    }),
+    sendConsentedSms({
+      to: ch.phone,
+      consent: !!ch.sms_consent,
+      channelId: ch.id,
+      label: "New booking text to owner",
+      body: `HubLinkPro: New booking from a${ch.city ? ` ${ch.city}` : ""} customer. See and reply: ${SITE_URL}/dashboard`,
+    }),
+  ]);
   const to = await ownerEmail(ch.owner_id);
   if (to) {
     const a = bookingAlertEmail({ lead, when, zone });

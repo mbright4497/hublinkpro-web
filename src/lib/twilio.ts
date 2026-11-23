@@ -51,7 +51,10 @@ export async function sendSms(from: string, to: string, body: string, log?: LogM
   return ok;
 }
 
-async function deliverSms(from: string, to: string, body: string): Promise<boolean> {
+// Send through the approved A2P Messaging Service (not a specific number). Used by the consented transactional texts.
+export const deliverViaService = (serviceSid: string, to: string, body: string) => deliverSms(serviceSid, to, body, true);
+
+async function deliverSms(sender: string, to: string, body: string, viaService = false): Promise<boolean> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   if (!sid || !token) {
@@ -65,7 +68,7 @@ async function deliverSms(from: string, to: string, body: string): Promise<boole
         Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({ From: from, To: to, Body: body }).toString(),
+      body: new URLSearchParams({ ...(viaService ? { MessagingServiceSid: sender } : { From: sender }), To: to, Body: body }).toString(),
     });
     if (!res.ok) {
       console.error("[HLP-TWILIO] sms failed", res.status, (await res.text()).slice(0, 300));
