@@ -144,7 +144,6 @@ export function requestConfirmEmail(o: { lead: Lead; channelName: string; channe
       bullets: lead.service ? [`Service: ${lead.service}`] : undefined,
       button: { label: `View ${channelName}`, url: o.channelUrl },
       signoff: false,
-      footerNote: `Sent by HubLinkPro on behalf of ${channelName}.`,
     },
   };
 }
@@ -161,7 +160,6 @@ export function bookingConfirmEmail(o: { lead: Lead; channelName: string; channe
       bullets: [`When: ${o.when} (${o.zone} time)`, ...(lead.service ? [`Service: ${lead.service}`] : [])],
       button: { label: `View ${channelName}`, url: o.channelUrl },
       signoff: false,
-      footerNote: `Sent by HubLinkPro on behalf of ${channelName}.`,
     },
   };
 }
