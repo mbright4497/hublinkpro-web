@@ -260,7 +260,7 @@ export default async function MarketHome({ market }: { market: Market }) {
             </span>
             HubLinkPro
           </div>
-          © 2026 HubLinkPro. Local discovery for {market.place}. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.
+          © 2026 HubLinkPro, a brand of Bright LLC. Local discovery for {market.place}. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.
           <div className="footlegal">
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function SmsTerms() {
   return (
-    <LegalLayout title="SMS Terms &amp; Conditions" updated="July 24, 2026">
+    <LegalLayout title="SMS Terms &amp; Conditions" updated="November 23, 2026">
       <p className="legal-callout">
         <b>Short version:</b> we only text you if you asked us to. Message frequency varies.
         Message and data rates may apply. Reply <b>STOP</b> at any time to stop. Reply{" "}
@@ -17,12 +17,20 @@ export default function SmsTerms() {
         texted with anyone else for their marketing.
       </p>
 
+      <p>
+        <b>Program name:</b> HubLinkPro Alerts &amp; Replies
+        <br />
+        <b>Message sender:</b> HubLinkPro, a brand of Bright LLC · Johnson City, TN 37604
+        <br />
+        <b>Support:</b> <a href="mailto:support@hublinkpro.com">support@hublinkpro.com</a>
+      </p>
+
       <h2>1. Program description</h2>
       <p>
         HubLinkPro operates SMS messaging programs for itself and on behalf of the local
-        businesses listed on our platform. Messages may be co-branded with the business you
-        requested and may arrive from that business&apos;s published phone number. Depending on
-        which form you filled out, you may receive:
+        businesses listed on our platform. Messages are sent from a HubLinkPro phone number and
+        may name the local business you requested. Depending on which form you filled out, you
+        may receive:
       </p>
       <ul>
         <li>
@@ -45,8 +53,9 @@ export default function SmsTerms() {
 
       <h2>2. How you opt in</h2>
       <p>
-        You opt in by checking the SMS consent box on a HubLinkPro form and submitting it, or by
-        texting us first. The consent box is never pre-checked — you have to check it yourself. We
+        You opt in by checking the SMS consent box on a HubLinkPro form and submitting it. Business
+        owners opt in with a separate SMS consent checkbox on their HubLinkPro account page. The
+        consent box is never pre-checked — you have to check it yourself. We
         record the exact wording you agreed to, along with the date and time, and we keep that
         record for as long as we message you plus at least four years afterward.
       </p>
@@ -95,10 +104,9 @@ export default function SmsTerms() {
       </p>
       <p>
         <b>Who the messages come from.</b> HubLinkPro operates the messaging for the local
-        business you requested. A message about your request may therefore be co-branded — it may
-        arrive from that business&apos;s published number and name them directly — but it is sent
-        by HubLinkPro on their behalf, under HubLinkPro&apos;s messaging registration and these
-        terms. Your consent covers <b>HubLinkPro and the specific business you asked about, for
+        business you requested. A message about your request is sent by HubLinkPro from a
+        HubLinkPro phone number and may name that business, under HubLinkPro&apos;s messaging
+        registration and these terms. Your consent covers <b>HubLinkPro and the specific business you asked about, for
         the request you submitted</b>. It does not extend to any other company, and it is not
         transferable.
       </p>

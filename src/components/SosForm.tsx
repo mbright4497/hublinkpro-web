@@ -53,8 +53,8 @@ export default function SosForm() {
       <div className="field"><label htmlFor="sos-problem">Anything the pro should know? (optional)</label>
         <textarea id="sos-problem" name="problem" rows={3} maxLength={500} /></div>
       <label style={{ display: "flex", gap: 10, fontSize: 13, margin: "0 0 16px", alignItems: "flex-start" }}>
-        <input type="checkbox" name="consent" required style={{ marginTop: 3 }} />
-        <span>I agree to receive text messages from HubLinkPro about this request. Msg &amp; data rates may apply. Reply STOP to opt out.</span>
+        <input type="checkbox" name="consent" style={{ marginTop: 3 }} />
+        <span>(Optional) Text me an arrival estimate and a tracking link for this request. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of getting help. <a href="/sms">SMS terms</a> · <a href="/privacy">Privacy</a></span>
       </label>
       <button className="btn-primary" type="submit" disabled={busy || !category} style={{ background: "#dc2626", color: "#fff", width: "100%", justifyContent: "center" }}>
         {busy ? "Finding the nearest pro…" : "Get a pro now"}

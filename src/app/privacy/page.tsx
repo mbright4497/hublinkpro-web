@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function Privacy() {
   return (
-    <LegalLayout title="Privacy Policy" updated="July 24, 2026">
+    <LegalLayout title="Privacy Policy" updated="November 23, 2026">
       <p className="legal-callout">
         <b>The one that matters most:</b> HubLinkPro does not sell, rent, or share your mobile
         phone number, your SMS consent, or your opt-in data with third parties or affiliates for
@@ -63,10 +63,9 @@ export default function Privacy() {
       </p>
       <p>
         <b>Who is actually texting you.</b> HubLinkPro operates the messaging for the local
-        business you requested. That means a text about your request may be co-branded — it may
-        come from the business&apos;s published number and identify that business by name — but it
-        is sent by HubLinkPro on their behalf, under HubLinkPro&apos;s messaging registration and
-        this policy. The consent you give at the form covers <b>HubLinkPro and the specific
+        business you requested. That means a text about your request is sent by HubLinkPro from a
+        HubLinkPro phone number and may identify that business by name, under HubLinkPro&apos;s
+        messaging registration and this policy. The consent you give at the form covers <b>HubLinkPro and the specific
         business you asked about, for the request you submitted</b> — nobody else, and nothing
         else.
       </p>
