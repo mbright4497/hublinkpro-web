@@ -31,7 +31,7 @@ export async function requestBooking(formData: FormData) {
   const supabase = await supabaseServer();
   const { data: ch } = await supabase
     .from("channels")
-    .select("id,name,phone,status")
+    .select("id,name,phone,status,owner_id")
     .eq("slug", slug)
     .eq("status", "live")
     .maybeSingle();
@@ -50,6 +50,41 @@ export async function requestBooking(formData: FormData) {
     sms_consent_at: consent ? new Date().toISOString() : null,
   });
   if (error) redirect(`${back}?reqerror=1#book`);
+
+  // Speed-to-lead: the owner hears about it and the customer gets a confirmation right away.
+  // Best-effort and sent together, so a slow or failed email never blocks the visitor.
+  // Each send is recorded in message_log by sendEmail.
+  const ownerTo = await ownerEmail(ch.owner_id);
+  await Promise.all([
+    email
+      ? sendEmail({
+          to: email,
+          log: { channelId: ch.id, label: "Request confirmation to customer" },
+          subject: `We got your request: ${ch.name}`,
+          text:
+            `Hi ${name},\n\nYour request went to ${ch.name}. They'll contact you soon.\n` +
+            (service ? `Service: ${service}\n` : "") +
+            (ch.phone ? `\nWant to talk sooner? Call ${ch.phone}.\n` : "") +
+            `\nSent through HubLinkPro.`,
+        })
+      : Promise.resolve(false),
+    ownerTo
+      ? sendEmail({
+          to: ownerTo,
+          replyTo: email ?? undefined,
+          log: { channelId: ch.id, label: "New request alert to owner" },
+          subject: `New request: ${name}${service ? `, ${service}` : ""}`,
+          text:
+            `${name} just sent a request on your HubLinkPro Channel. The first business to reply usually wins the job.\n\n` +
+            `Phone: ${phone}\n` +
+            (email ? `Email: ${email}\n` : "") +
+            (service ? `Service: ${service}\n` : "") +
+            (preferred_time ? `Best time: ${preferred_time}\n` : "") +
+            (message ? `\nThey wrote:\n${message}\n` : "") +
+            `\nSee and manage requests: https://hublinkpro.com/dashboard#bookings`,
+        })
+      : Promise.resolve(false),
+  ]);
 
   // Best-effort hand-off to GoHighLevel. The request is already saved, so this never blocks the visitor.
   if (process.env.HLP_INTAKE_WEBHOOK_URL) {
