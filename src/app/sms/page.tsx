@@ -54,7 +54,7 @@ export default function SmsTerms() {
       <h2>2. How you opt in</h2>
       <p>
         You opt in by checking the SMS consent box on a HubLinkPro form and submitting it. Business
-        owners opt in with a separate SMS consent checkbox on their HubLinkPro account page. The
+        owners opt in with a separate SMS consent checkbox when they create their HubLinkPro Channel. The
         consent box is never pre-checked — you have to check it yourself. We
         record the exact wording you agreed to, along with the date and time, and we keep that
         record for as long as we message you plus at least four years afterward.
