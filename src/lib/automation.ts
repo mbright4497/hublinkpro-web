@@ -25,7 +25,7 @@ export async function recordRequestReply(o: { channelId: number; channelName: st
       if (error) console.error("[HLP-AUTO] link_replied_at failed:", error.message);
     }
     const { error } = await db.from("automation_events").insert({
-      kind: "request_confirmed",
+      kind: "link_replied",
       channel_id: o.channelId,
       market_id: o.marketId ?? null,
       public_text: `A request to ${o.channelName}${o.city ? ` in ${o.city}` : ""} was confirmed instantly.`,
