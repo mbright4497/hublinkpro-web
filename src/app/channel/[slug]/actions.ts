@@ -6,6 +6,7 @@ import { fmtWhen, tzLabel } from "@/lib/booking";
 import { sendEmail, ownerEmail } from "@/lib/notify";
 import { renderEmail, requestAlertEmail, requestConfirmEmail, bookingAlertEmail, bookingConfirmEmail } from "@/lib/email-template";
 import { SITE_URL } from "@/lib/site";
+import { recordRequestReply } from "@/lib/automation";
 
 const BOOKING_CONSENT_TEXT =
   "I agree to receive text messages about this request from the business and from HubLinkPro on its behalf. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase.";
@@ -33,12 +34,13 @@ export async function requestBooking(formData: FormData) {
   const supabase = await supabaseServer();
   const { data: ch } = await supabase
     .from("channels")
-    .select("id,name,phone,status,owner_id")
+    .select("id,name,phone,status,owner_id,city,market_id")
     .eq("slug", slug)
     .eq("status", "live")
     .maybeSingle();
   if (!ch) redirect(back);
 
+  const startedAt = Date.now();
   const { error } = await supabase.from("booking_requests").insert({
     channel_id: ch.id,
     name,
@@ -60,10 +62,12 @@ export async function requestBooking(formData: FormData) {
   const lead = { name, phone, email, service, message, preferredTime: preferred_time };
   const confirm = requestConfirmEmail({ lead, channelName: ch.name, channelPhone: ch.phone, channelUrl: `${SITE_URL}/channel/${encodeURIComponent(slug)}` });
   const alert = requestAlertEmail({ lead });
-  await Promise.all([
+  const [confirmed] = await Promise.all([
     email ? sendEmail({ to: email, subject: confirm.subject, ...renderEmail(confirm.parts), log: { channelId: ch.id, label: "Request confirmation to customer" } }) : Promise.resolve(false),
     ownerTo ? sendEmail({ to: ownerTo, replyTo: email ?? undefined, subject: alert.subject, ...renderEmail(alert.parts), log: { channelId: ch.id, label: "New request alert to owner" } }) : Promise.resolve(false),
   ]);
+  // Feeds the response-time badge and the public automation feed (real events only).
+  if (confirmed) await recordRequestReply({ channelId: ch.id, channelName: ch.name, city: ch.city, marketId: ch.market_id, phone, startedAt });
 
   // Best-effort hand-off to GoHighLevel. The request is already saved, so this never blocks the visitor.
   if (process.env.HLP_INTAKE_WEBHOOK_URL) {

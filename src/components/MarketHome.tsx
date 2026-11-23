@@ -9,6 +9,7 @@ import { NavSignIn, NavCta } from "@/components/AuthNav";
 import HouseStartCard from "@/components/HouseStartCard";
 import type { Market } from "@/lib/markets";
 import { SITE_SOCIALS } from "@/lib/site";
+import { automationSnapshot, fmtSeconds, ago } from "@/lib/automation";
 
 const SERVICES = [
   { svc: "Food truck", icon: "🌮", note: "Lists free" },
@@ -105,7 +106,7 @@ function Row({
 }
 
 export default async function MarketHome({ market }: { market: Market }) {
-  const [local, stage, posts] = await Promise.all([localChannels(market.slug), houseStage(), getPosts()]);
+  const [local, stage, posts, live] = await Promise.all([localChannels(market.slug), houseStage(), getPosts(), automationSnapshot()]);
   const hasPosts = posts.length > 0;
   const zips = market.featured_zips;
   const SLOTS = zips.length ? SERVICES.map((s, i) => ({ ...s, zip: zips[i % zips.length] })) : [];
@@ -198,6 +199,20 @@ export default async function MarketHome({ market }: { market: Market }) {
       <section className="section" id="automations">
         <h2>HLP Automations</h2>
         <p className="sub">In development. Founding members get first access.</p>
+        {live.count > 0 && (
+          <div className="autocard" style={{ marginBottom: 16 }}>
+            <h3>⚡ Live from the platform</h3>
+            <p>
+              {live.count >= 200 ? "200+" : live.count} request{live.count === 1 ? "" : "s"} confirmed instantly
+              {live.medianSec != null ? ` · typical confirmation ${fmtSeconds(live.medianSec)}` : ""}
+            </p>
+            <ul style={{ listStyle: "none", margin: "10px 0 0", padding: 0, display: "grid", gap: 6, fontSize: 13, color: "var(--color-mist)" }}>
+              {live.recent.map((e, i) => (
+                <li key={i}>{e.text} <span style={{ color: "var(--color-muted)" }}>· {ago(e.at)}</span></li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="autogrid">
           {AUTOMATIONS.map((a) => (
             <div key={a.h} className="autocard">
