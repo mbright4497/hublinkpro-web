@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SOS_CATEGORIES } from "@/lib/sos-categories";
 
-export default function SosForm() {
+export default function SosForm({ showSmsConsent = false }: { showSmsConsent?: boolean }) {
   const router = useRouter();
   const [category, setCategory] = useState("");
   const [busy, setBusy] = useState(false);
@@ -52,10 +52,12 @@ export default function SosForm() {
         <input id="sos-phone" name="phone" type="tel" required inputMode="tel" autoComplete="tel" placeholder="(423) 555-0100" /></div>
       <div className="field"><label htmlFor="sos-problem">Anything the pro should know? (optional)</label>
         <textarea id="sos-problem" name="problem" rows={3} maxLength={500} /></div>
+      {showSmsConsent && (
       <label style={{ display: "flex", gap: 10, fontSize: 13, margin: "0 0 16px", alignItems: "flex-start" }}>
         <input type="checkbox" name="consent" style={{ marginTop: 3 }} />
         <span>(Optional) Text me an arrival estimate and a tracking link for this request. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of getting help. <a href="/sms">SMS terms</a> · <a href="/privacy">Privacy</a></span>
       </label>
+      )}
       <button className="btn-primary" type="submit" disabled={busy || !category} style={{ background: "#dc2626", color: "#fff", width: "100%", justifyContent: "center" }}>
         {busy ? "Finding the nearest pro…" : "Get a pro now"}
       </button>

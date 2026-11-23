@@ -40,7 +40,12 @@ export function toE164(input: string): string | null {
   return null;
 }
 
+// Outbound automation texts (missed-call text-back, SOS) stay off until the A2P campaign is approved.
+// Set SMS_AUTOMATIONS_ENABLED=true in Vercel to turn them on.
+export const SMS_AUTOMATIONS_ENABLED = process.env.SMS_AUTOMATIONS_ENABLED === "true";
+
 export async function sendSms(from: string, to: string, body: string, log?: LogMeta): Promise<boolean> {
+  if (!SMS_AUTOMATIONS_ENABLED) return false;
   const ok = await deliverSms(from, to, body);
   if (log) await logMessage({ ...log, medium: "sms", to, body, ok });
   return ok;
