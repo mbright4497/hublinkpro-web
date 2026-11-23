@@ -21,7 +21,6 @@ export async function POST(req: Request) {
   if (!/^[0-9]{5}$/.test(zip) || !isSosCategory(category) || !name || !phone) {
     return NextResponse.json({ error: "Check your ZIP, name and phone." }, { status: 400 });
   }
-  if (!consent) return NextResponse.json({ error: "Please agree to text updates so we can reach you." }, { status: 400 });
 
   // Abuse cap: 3 requests per IP per hour.
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
@@ -36,7 +35,7 @@ export async function POST(req: Request) {
 
   const { data: row, error } = await db
     .from("sos_requests")
-    .insert({ zip, category, name, phone, problem, sms_consent: true, sms_consent_at: new Date().toISOString(), ip_hash: ipHash })
+    .insert({ zip, category, name, phone, problem, sms_consent: consent, sms_consent_at: consent ? new Date().toISOString() : null, ip_hash: ipHash })
     .select("id,token").single();
   if (error || !row) return NextResponse.json({ error: "Could not start your request." }, { status: 500 });
 
