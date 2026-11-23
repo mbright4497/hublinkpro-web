@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SosForm from "@/components/SosForm";
+import { SMS_AUTOMATIONS_ENABLED } from "@/lib/twilio";
 
 export const metadata = {
   title: "Home emergency? Get a pro now | HubLinkPro",
@@ -17,7 +18,7 @@ export default function Sos() {
       <div className="page" style={{ maxWidth: 560 }}>
         <h1>Emergency? We&apos;ll find a pro now.</h1>
         <p className="lead">Tell us what&apos;s wrong. We call the on-call pros near you. The first one to say yes is on the way, and you see who and when.</p>
-        <SosForm />
+        <SosForm showSmsConsent={SMS_AUTOMATIONS_ENABLED} />
       </div>
     </>
   );
