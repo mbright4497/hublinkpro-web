@@ -14,6 +14,7 @@ import { requestBooking } from "./actions";
 import { addPortfolioItem } from "@/app/dashboard/actions";
 import { SITE_URL, jsonLd } from "@/lib/site";
 import ChannelChat from "@/components/ChannelChat";
+import LegalFooter from "@/components/LegalFooter";
 import { chatEnabled } from "@/lib/chat";
 import { answerStat } from "@/lib/sos";
 import { responseBadge, fmtSeconds } from "@/lib/automation";
@@ -350,6 +351,8 @@ export default async function ChannelPage({
           </section>
         )}
       </div>
+
+      <LegalFooter />
 
       {isLive && (
         <div className="actionbar" role="navigation" aria-label="Quick actions">

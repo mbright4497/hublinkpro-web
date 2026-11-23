@@ -105,7 +105,13 @@ export default async function NetworkPage({
       )}
 
       <footer className="foot">
-        <div className="copy">© 2026 HubLinkPro. Local discovery for the Tri-Cities. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.</div>
+        <div className="copy">© 2026 HubLinkPro, a brand of Bright LLC. Local discovery for the Tri-Cities. HubLinkPro is a directory; we do not perform, vouch for, or guarantee the work of any listed business.
+          <div className="footlegal">
+            <Link href="/terms">Terms</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/sms">SMS Terms</Link>
+          </div>
+        </div>
         <div className="col">
           <h4>Neighbors</h4>
           <Link href="/">Discover local pros</Link>
