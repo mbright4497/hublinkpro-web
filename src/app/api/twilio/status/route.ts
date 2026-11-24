@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { voiceAgentTwiml } from "@/lib/voice-handoff";
 import { SITE_BASE, readTwilioForm, sendSms, twiml, verifyTwilioSignature } from "@/lib/twilio";
 
 // Twilio calls this when the forwarded leg ends. Record the outcome, and if the call was
@@ -27,6 +28,10 @@ export async function POST(req: Request) {
     .select("id,channel_id,from_number")
     .maybeSingle();
   if (!log || status === "answered") return done;
+
+  // Nobody picked up: if this Channel has a voice agent, hand the caller to it instead of hanging up.
+  const handoff = await voiceAgentTwiml(db, log.channel_id, params.From, params.To);
+  if (handoff) return twiml(handoff);
 
   const { data: ch } = await db
     .from("channels")
