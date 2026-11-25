@@ -5,6 +5,7 @@ import { renderEmail } from "@/lib/email-template";
 import { SITE_URL } from "@/lib/site";
 import { phoneKey, fmtPhone } from "@/lib/crm";
 import { parseCall, verifyElevenLabsSignature } from "@/lib/voice";
+import { sendConsentedSms } from "@/lib/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
   const { data: map } = await db.from("channel_voice_agents").select("channel_id").eq("agent_id", call.agentId).maybeSingle();
   if (!map) return skip("agent is not attached to a Channel", call.agentId);
-  const { data: ch } = await db.from("channels").select("id,name,owner_id").eq("id", map.channel_id).maybeSingle();
+  const { data: ch } = await db.from("channels").select("id,name,owner_id,phone,sms_consent").eq("id", map.channel_id).maybeSingle();
   if (!ch) return skip("channel not found", map.channel_id);
 
   // ElevenLabs retries failed deliveries, so one call must only ever produce one email.
@@ -91,6 +92,17 @@ export async function POST(req: Request) {
     });
   } else {
     console.warn("[HLP-VOICE] no owner email for channel", ch.id);
+  }
+  // Urgent calls also text the owner (off unless OWNER_URGENT_TEXT_ENABLED=true). No caller details in the text,
+  // only a link. Uses the owner's own consent box, opt-outs and quiet hours like every other owner text.
+  if (call.urgent && process.env.OWNER_URGENT_TEXT_ENABLED === "true") {
+    await sendConsentedSms({
+      to: ch.phone,
+      consent: !!ch.sms_consent,
+      channelId: ch.id,
+      label: "Urgent call text to owner",
+      body: `HubLinkPro: Urgent call for ${clip(ch.name, 40)}. See it here: ${SITE_URL}/dashboard/crm/${leadId}`,
+    });
   }
   console.log("[HLP-VOICE] handled", call.conversationId, "lead", leadId);
   return NextResponse.json({ ok: true, leadId });
